@@ -22,12 +22,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void led_set(uint8_t usb_led)
 {
-    uint8_t sun_led = 0;
-    if (usb_led & (1<<USB_LED_NUM_LOCK))    sun_led |= (1<<0);
-    if (usb_led & (1<<USB_LED_COMPOSE))     sun_led |= (1<<1);
-    if (usb_led & (1<<USB_LED_SCROLL_LOCK)) sun_led |= (1<<2);
-    if (usb_led & (1<<USB_LED_CAPS_LOCK))   sun_led |= (1<<3);
-
-    serial_send(0x0E);
-    serial_send(sun_led);
 }

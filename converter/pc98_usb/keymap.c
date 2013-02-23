@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     { KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO    }, \
     { KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO    }, \
     { KC_NO,    KC_##K51, KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO    }, \
-    { KC_NO,    KC_NO,    KC_##K5A, KC_NO,    KC_NO,    KC_NO,    KC_NO,    KC_NO    }, \
+    { KC_NO,    KC_##K59, KC_##K5A, KC_##K5B, KC_NO,    KC_NO,    KC_NO,    KC_NO    }, \
     { KC_##K60, KC_##K61, KC_##K62, KC_##K63, KC_##K64, KC_##K65, KC_##K66, KC_##K67 }, \
     { KC_##K68, KC_##K69, KC_##K6A, KC_##K6B, KC_NO,    KC_NO,    KC_NO,    KC_NO    }, \
     { KC_##K70, KC_NO,    KC_NO,    KC_##K73, KC_##K74, KC_NO,    KC_NO,    KC_NO    }, \
@@ -119,7 +119,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       ESC,    1,   2,   3,   4,   5,    NO, NO,     6,   7,   8,   9,   0,   BSPC,
       TAB,    Q,   W,   E,   R,   T,      UP,       Y,   U,   I,   O,   P,   ENT,
       LCTL,  A,   S,   D,   F,   G,  MINS,  EQL,     H,   J,   K,   L,SCLN,
-      LSFT, Z,   X,   C,   V,   B, INS, DOWN,  DEL,   N,   M,COMM, DOT,SLSH,
+      LSFT, Z,   X,   C,   V,   B, INS, DOWN, QUOT,   N,   M,COMM, DOT,SLSH,
               LGUI, LALT, LCTL, LSFT,      SPC,      SPC,   RALT
     ),
 };
