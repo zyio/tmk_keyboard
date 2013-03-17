@@ -152,23 +152,22 @@ uint8_t matrix_key_count(void)
 }
 
 /* Column pin configuration
- * col: 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14
- * pin: D0  D1  D2  D2  D3  D4  D5  D6  D7  C0  C1  C2  C3  C4  C5
+ * col: 15  14  13  12  11  10   9   8   7   6   5   4   3   2   1   0
+ * pin: --  C6  C5  C4  C3  C2  C1  C0  D7  D6  D5  D4  D3  D2  D1  D0
  */
 static void  init_cols(void)
 {
     // Input with pull-up(DDR:0, PORT:1)
     DDRD  = 0x00;
     PORTD = 0xFF;
-    DDRC  &= ~0b00111111;
-    PORTC |=  0b00111111;
-    //DDRC  &= ~0x3F;
-    //PORTC |=  0x3F;
+    DDRC  &= ~0b01111111;
+    PORTC |=  0b01111111;
 }
 
 static uint16_t read_cols(void)
 {
-    return ((PINC&0x1F) | PIND);
+    //return ~((0x7f)<<8 | PIND) & 0x7fff;
+    return ~((PINC)<<8 | PIND) & 0x7fff;
 }
 
 /* Row pin configuration
