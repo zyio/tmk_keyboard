@@ -167,7 +167,7 @@ static void  init_cols(void)
 static uint16_t read_cols(void)
 {
     //return ~((0x7f)<<8 | PIND) & 0x7fff;
-    return ~((PINC)<<8 | PIND) & 0x7fff;
+    return (~PINC&0x7f)<<8 | ~PIND&0xbf;
 }
 
 /* Row pin configuration
