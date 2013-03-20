@@ -152,8 +152,8 @@ uint8_t matrix_key_count(void)
 }
 
 /* Column pin configuration
- * col: 15  14  13  12  11  10   9   8   7   6   5   4   3   2   1   0
- * pin: --  C6  C5  C4  C3  C2  C1  C0  D7  D6  D5  D4  D3  D2  D1  D0
+ * col: 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
+ * pin: C6  C5  C4  C3  C2  C1  C0  E1  E0  D7  D5  D4  D3  D2  D1  D0
  */
 static void  init_cols(void)
 {
@@ -166,13 +166,27 @@ static void  init_cols(void)
 
 static uint16_t read_cols(void)
 {
-    //return ~((0x7f)<<8 | PIND) & 0x7fff;
-    return (~PINC&0x7f)<<8 | ~PIND&0xbf;
+    return (PINC&(1<<6) ? 0 : (1<<0)) |
+           (PINC&(1<<5) ? 0 : (1<<1)) |
+           (PINC&(1<<4) ? 0 : (1<<2)) |
+           (PINC&(1<<3) ? 0 : (1<<3)) |
+           (PINC&(1<<2) ? 0 : (1<<4)) |
+           (PINC&(1<<1) ? 0 : (1<<5)) |
+           (PINC&(1<<0) ? 0 : (1<<6)) |
+           (PINE&(1<<1) ? 0 : (1<<7)) |
+           (PINE&(1<<0) ? 0 : (1<<8)) |
+           (PIND&(1<<7) ? 0 : (1<<9)) |
+           (PIND&(1<<5) ? 0 : (1<<10)) |
+           (PIND&(1<<4) ? 0 : (1<<11)) |
+           (PIND&(1<<3) ? 0 : (1<<12)) |
+           (PIND&(1<<2) ? 0 : (1<<13)) |
+           (PIND&(1<<1) ? 0 : (1<<14)) |
+           (PIND&(1<<0) ? 0 : (1<<15));
 }
 
 /* Row pin configuration
  * row: 0   1   2   3   4
- * pin: B0  B1  B2  B3  B4
+ * pin: B4  B3  B2  B1  B0
  */
 static void unselect_rows(void)
 {
@@ -184,6 +198,26 @@ static void unselect_rows(void)
 static void select_row(uint8_t row)
 {
     // Output low(DDR:1, PORT:0) to select
-    DDRB  |=  (1<<row);
-    PORTB &= ~(1<<row);
+    switch (row) {
+        case 0:
+            DDRB  |=  (1<<4);
+            PORTB &= ~(1<<4);
+            break;
+        case 1:
+            DDRB  |=  (1<<3);
+            PORTB &= ~(1<<3);
+            break;
+        case 2:
+            DDRB  |=  (1<<2);
+            PORTB &= ~(1<<2);
+            break;
+        case 3:
+            DDRB  |=  (1<<1);
+            PORTB &= ~(1<<1);
+            break;
+        case 4:
+            DDRB  |=  (1<<0);
+            PORTB &= ~(1<<0);
+            break;
+    }
 }
