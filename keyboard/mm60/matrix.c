@@ -158,10 +158,12 @@ uint8_t matrix_key_count(void)
 static void  init_cols(void)
 {
     // Input with pull-up(DDR:0, PORT:1)
-    DDRD  = 0x00;
-    PORTD = 0xFF;
     DDRC  &= ~0b01111111;
     PORTC |=  0b01111111;
+    DDRD  &= ~0b10111111;
+    PORTD |=  0b10111111;
+    DDRE  &= ~0b00000011;
+    PORTE |=  0b00000011;
 }
 
 static uint16_t read_cols(void)
