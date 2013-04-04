@@ -63,72 +63,72 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Layer 0: Default Layer
      * ,-----------------------------------------------------------.
-     * |Esc|  1|  2|  3|  4|  5|  6|  7|  8|  9|  0|  -|  =|  `|  \|
+     * |Esc|  1|  2|  3|  4|  5|  6|  7|  8|  9|  0|  -|  =|  \|Del|
      * |-----------------------------------------------------------|
      * |Tab  |  Q|  W|  E|  R|  T|  Y|  U|  I|  O|  P|  [|  ]|Backs|
      * |-----------------------------------------------------------|
-     * |Fn    |  A|  S|  D|  F|  G|  H|  J|  K|  L|Fn3|  '|Return  |
+     * |Fn2   |  A|  S|  D|  F|  G|  H|  J|  K|  L|  ;|  '|Return  |
      * |-----------------------------------------------------------|
-     * |Shift   |  Z|  X|  C|  V|  B|  N|  M|  ,|  .|Fn2|Up |Shift |
+     * |Shift   |  Z|  X|  C|  V|  B|  N|  M|  ,|  .|  /|Up |Shift |
      * |-----------------------------------------------------------|
      * |Ctrl|Gui |Alt |      Space             |Alt |Left|Down|Righ|
      * `-----------------------------------------------------------'
      */
     KEYMAP_ANSI(
-        ESC, 1,   2,   3,   4,   5,   6,   7,   8,   9,   0,   MINS,EQL, GRV, BSLS, \
+        ESC, 1,   2,   3,   4,   5,   6,   7,   8,   9,   0,   MINS,EQL, BSLS,DEL, \
         TAB, Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P,   LBRC,RBRC,BSPC, \
-        FN1, A,   S,   D,   F,   G,   H,   J,   K,   L,   SCLN,QUOT,     ENT,  \
+        FN2, A,   S,   D,   F,   G,   H,   J,   K,   L,   SCLN,QUOT,     ENT,  \
         LSFT,Z,   X,   C,   V,   B,   N,   M,   COMM,DOT, SLSH,     UP,  RSFT, \
-        LCTL,LGUI,LALT,          SPC,                     RALT,LEFT,DOWN,RGHT),
+        LCTL,LGUI,LALT,          SPC,                     MENU,LEFT,DOWN,RGHT),
 
-    /* Layer 1: Function
-     * ,-----------------------------------------------------------.
-     * |   | F1| F2| F3| F4| F5| F6| F7| F8| F9|F10|F11|F12|   |   |
-     * |-----------------------------------------------------------|
-     * |     |   |   |   |   |   |   |   |   |   |Psc|Pus|   |Delet|
-     * |-----------------------------------------------------------|
-     * |      |   |   |   |   |   |   |   |   |   |   |   |        |
-     * |-----------------------------------------------------------|
-     * |Caps Loc|   |   |   |   |   |   |   |   |   |   |PgU|Caps L|
-     * |-----------------------------------------------------------|
-     * |    |    |    |                        |    |Home|PgDn|End |
-     * `-----------------------------------------------------------'
-     */
-    KEYMAP_ANSI(
-        TRNS,F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9,  F10, F11, F12, TRNS,TRNS, \
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,PSCR,PAUS,TRNS,DEL,  \
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,     TRNS, \
-        CAPS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,FN2, TRNS,TRNS,TRNS,     PGUP,CAPS, \
-        TRNS,TRNS,TRNS,          TRNS,                    TRNS,HOME,PGDN,END),
-
-    /* Layer 2: Numpad
+    /* Layer 1: Numpad
      * ,-----------------------------------------------------------.
      * |   |   |   |   |   |   |   |  7|  8|  9|   |   |   |   |   |
      * |-----------------------------------------------------------|
      * |     |   |   |   |   |   |   |  4|  5|  6|   |   |   |     |
      * |-----------------------------------------------------------|
-     * |      |   |   |   |   |   |   |  1|  2|  3|   |   |        |
+     * |      |   |   |   |   |   |   |  1|  2|  3|  *|   |        |
      * |-----------------------------------------------------------|
-     * |        |   |   |   |   |   |   |   |   |   |   |   |      |
+     * |        |   |   |   |   |   |   |Nlk|  0|  .|  /|   |      |
      * |-----------------------------------------------------------|
      * |    |    |    |                        |    |    |    |    |
      * `-----------------------------------------------------------'
      */
     KEYMAP_ANSI(
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,7,   8,   9,   TRNS,TRNS,TRNS,TRNS,TRNS, \
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,4,   5,   6,   TRNS,TRNS,TRNS,TRNS, \
-        NO,  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,1,   2,   3,   TRNS,TRNS,     TRNS, \
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,FN0, TRNS,TRNS,TRNS,     TRNS,TRNS, \
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,P7,  P8,  P9,  TRNS,PMNS,PPLS,TRNS,TRNS, \
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,P4,  P5,  P6,  TRNS,TRNS,TRNS,TRNS, \
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,P1,  P2,  P3,  PAST,TRNS,     PENT, \
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,NLCK,P0,  PDOT,PSLS,     TRNS,TRNS, \
         TRNS,TRNS,TRNS,          TRNS,                    TRNS,TRNS,TRNS,TRNS),
+
+    /* Layer 2: Function
+     * ,-----------------------------------------------------------.
+     * |  `| F1| F2| F3| F4| F5| F6| F7| F8| F9|F10|F11|F12|  ~|Ins|
+     * |-----------------------------------------------------------|
+     * |     |   |   |   |   |   |   |   |   |   |Psc|Pus|   |Delet|
+     * |-----------------------------------------------------------|
+     * |      |   |   |   |   |   |   |   |   |   |   |   |        |
+     * |-----------------------------------------------------------|
+     * |Caps Loc|   |   |   |   |   |   |Fn1|   |   |   |PgU|Caps L|
+     * |-----------------------------------------------------------|
+     * |    |    |    |                        |    |Home|PgDn|End |
+     * `-----------------------------------------------------------'
+     */
+    KEYMAP_ANSI(
+        GRV, F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9,  F10, F11, F12, FN0, INS, \
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,PSCR,PAUS,TRNS,DEL,  \
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,     TRNS, \
+        CAPS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,FN1, TRNS,TRNS,TRNS,     PGUP,CAPS, \
+        TRNS,TRNS,TRNS,          TRNS,                    TRNS,HOME,PGDN,END),
 };
 
 /*
  * Fn action definition
  */
 static const uint16_t PROGMEM fn_actions[] = {
-    [0] = ACTION_LAYER_DEFAULT,
-    [1] = ACTION_LAYER_SET_MOMENTARY(1),
-    [2] = ACTION_LAYER_SET_TOGGLE(2),
+    [0] = ACTION_LMOD_KEY(KC_LSFT, KC_GRV),
+    [1] = ACTION_LAYER_BIT_TOGGLE(1),
+    [2] = ACTION_LAYER_BIT_MOMENTARY(2),
 };
 
 

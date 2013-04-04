@@ -65,6 +65,10 @@ void matrix_init(void)
     debug_keyboard = true;
     debug_matrix = true;
 
+    // To use PORTF disable JTAG with writing JTD bit twice within four cycles.
+    MCUCR |= (1<<JTD);
+    MCUCR |= (1<<JTD);
+
     // initialize row and col
     unselect_rows();
     init_cols();
@@ -153,48 +157,49 @@ uint8_t matrix_key_count(void)
 
 /* Column pin configuration
  * col: 0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15
- * pin: C6  C5  C4  C3  C2  C1  C0  E1  E0  D7  D5  D4  D3  D2  D1  D0
+ * pin: D0  D1  D2  D3  D4  D5  D7  E0  E1  C1  C2  C3  C4  C5  C6  --
  */
 static void  init_cols(void)
 {
     // Input with pull-up(DDR:0, PORT:1)
-    DDRC  &= ~0b01111111;
-    PORTC |=  0b01111111;
+    DDRC  &= ~0b01111110;
+    PORTC |=  0b01111110;
     DDRD  &= ~0b10111111;
     PORTD |=  0b10111111;
     DDRE  &= ~0b00000011;
     PORTE |=  0b00000011;
 }
 
+/* Column state(0:off, 1:on) */
 static uint16_t read_cols(void)
 {
-    return (PINC&(1<<6) ? 0 : (1<<0)) |
-           (PINC&(1<<5) ? 0 : (1<<1)) |
-           (PINC&(1<<4) ? 0 : (1<<2)) |
-           (PINC&(1<<3) ? 0 : (1<<3)) |
-           (PINC&(1<<2) ? 0 : (1<<4)) |
-           (PINC&(1<<1) ? 0 : (1<<5)) |
-           (PINC&(1<<0) ? 0 : (1<<6)) |
-           (PINE&(1<<1) ? 0 : (1<<7)) |
-           (PINE&(1<<0) ? 0 : (1<<8)) |
-           (PIND&(1<<7) ? 0 : (1<<9)) |
-           (PIND&(1<<5) ? 0 : (1<<10)) |
-           (PIND&(1<<4) ? 0 : (1<<11)) |
-           (PIND&(1<<3) ? 0 : (1<<12)) |
-           (PIND&(1<<2) ? 0 : (1<<13)) |
-           (PIND&(1<<1) ? 0 : (1<<14)) |
-           (PIND&(1<<0) ? 0 : (1<<15));
+    return (PIND&(1<<0) ? 0 : (1<<0)) |
+           (PIND&(1<<1) ? 0 : (1<<1)) |
+           (PIND&(1<<2) ? 0 : (1<<2)) |
+           (PIND&(1<<3) ? 0 : (1<<3)) |
+           (PIND&(1<<4) ? 0 : (1<<4)) |
+           (PIND&(1<<5) ? 0 : (1<<5)) |
+           (PIND&(1<<7) ? 0 : (1<<6)) |
+           (PINE&(1<<0) ? 0 : (1<<7)) |
+           (PINE&(1<<1) ? 0 : (1<<8)) |
+           (PINC&(1<<1) ? 0 : (1<<9)) |
+           (PINC&(1<<2) ? 0 : (1<<10)) |
+           (PINC&(1<<3) ? 0 : (1<<11)) |
+           (PINC&(1<<4) ? 0 : (1<<12)) |
+           (PINC&(1<<5) ? 0 : (1<<13)) |
+           (PINC&(1<<6) ? 0 : (1<<14)) |
+           ((0<<15));
 }
 
 /* Row pin configuration
  * row: 0   1   2   3   4
- * pin: B4  B3  B2  B1  B0
+ * pin: F4  F3  F2  F1  F0
  */
 static void unselect_rows(void)
 {
     // Hi-Z(DDR:0, PORT:0) to unselect
-    DDRB  &= ~0b00011111;
-    PORTB &= ~0b00011111;
+    DDRF  &= ~0b00011111;
+    PORTF &= ~0b00011111;
 }
 
 static void select_row(uint8_t row)
@@ -202,24 +207,24 @@ static void select_row(uint8_t row)
     // Output low(DDR:1, PORT:0) to select
     switch (row) {
         case 0:
-            DDRB  |=  (1<<4);
-            PORTB &= ~(1<<4);
+            DDRF  |=  (1<<4);
+            PORTF &= ~(1<<4);
             break;
         case 1:
-            DDRB  |=  (1<<3);
-            PORTB &= ~(1<<3);
+            DDRF  |=  (1<<3);
+            PORTF &= ~(1<<3);
             break;
         case 2:
-            DDRB  |=  (1<<2);
-            PORTB &= ~(1<<2);
+            DDRF  |=  (1<<2);
+            PORTF &= ~(1<<2);
             break;
         case 3:
-            DDRB  |=  (1<<1);
-            PORTB &= ~(1<<1);
+            DDRF  |=  (1<<1);
+            PORTF &= ~(1<<1);
             break;
         case 4:
-            DDRB  |=  (1<<0);
-            PORTB &= ~(1<<0);
+            DDRF  |=  (1<<0);
+            PORTF &= ~(1<<0);
             break;
     }
 }
