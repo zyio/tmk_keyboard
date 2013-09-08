@@ -74,6 +74,8 @@ void init_ergodox(void)
 uint8_t init_mcp23018(void) {
     uint8_t err = 0x20;
 
+    return err;
+
     // I2C subsystem
     if (i2c_initialized == 0) {
         i2c_init();  // on pins D(1,0)
