@@ -1,3 +1,4 @@
+#include "action_util.h"
 #define KC_SW0 KC_FN0
 
 static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -32,7 +33,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         FN6, FN1, LCTL,LALT,LGUI,
                                       FN8, HOME,
                                            END,
-                                 BSPC,ESC, SPC,
+                                 BSPC,FN10,SPC,
         // right hand
              MINS,6,   7,   8,   9,   0,   EQL,
              FN6, F,   G,   C,   R,   L,   SLSH,
@@ -173,7 +174,6 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,TRNS,
         TRNS, TRNS,RSFT,RCTL
     ),
-
     KEYMAP(  // layout: layer 5: Workman layout
         // left hand
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
@@ -235,6 +235,27 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,TRNS,
         TRNS,
         TRNS,RSFT,RCTL
+    ),
+
+    KEYMAP(  // layout: layer 8: Special function-driven commands
+        // left hand
+        FN11,FN11,FN11,FN11,FN11,FN11,FN11,
+        FN11,FN11,FN11,FN11,FN11,FN11,FN11,
+        FN11,FN11,FN11,FN11,FN11,FN11,
+        FN11,FN11,FN11,FN11,FN11,FN11,FN11,
+        FN11,FN11,FN11,FN11,FN11,
+                                      FN11,FN11,
+                                           FN11,
+                                 FN11,FN10,FN11,
+        // right hand
+             FN11,FN11,FN11,FN11,FN11,FN11,FN11,
+             FN11,FN11,FN11,FN11,FN11,FN11,FN11,
+                  FN11,FN11,FN11,FN11,FN11,FN11,
+             FN11,FN11,FN11,FN11,FN11,FN11,FN11,
+                       FN11,FN11,FN11,FN11,FN11,
+        FN11,FN11,
+        FN11,
+        FN11,FN11,FN11
     ),
 
     KEYMAP(  // layout: layer N: fully transparent
@@ -324,8 +345,10 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_DEFAULT_LAYER_SET(5),                    // FN5 - switch to Layer5
     ACTION_LAYER_TAP_TOGGLE(2),                     // FN6 - numpad
     ACTION_FUNCTION(TEENSY_KEY),                    // FN7 - Teensy key
-	ACTION_LAYER_TOGGLE(6),                         // FN8 - toggle Plover
+    ACTION_LAYER_TOGGLE(6),                         // FN8 - toggle Plover
     ACTION_MACRO(PLOVER_SWITCH),                    // FN9 - Suspend/resume Plover
+    ACTION_LAYER_MOMENTARY(8),                      // FN10 - Trigger the AnyKey layer
+    ACTION_FUNCTION(ANY_KEY),                       // FN11 - AnyKey functional layer
 	/*
 	ACTION_MODS_TAP_KEY(MOD_LCTL, KC_U),            // FN09 - Ctrl + U
 	ACTION_MODS_TAP_KEY(MOD_RCTL, KC_H),            // FN10 - Ctrl + H
@@ -336,8 +359,42 @@ static const uint16_t PROGMEM fn_actions[] = {
 	*/
 };
 
-void action_function(keyrecord_t *event, uint8_t id, uint8_t opt)
+void simon_hotkey(keyrecord_t *record, action_t action)
 {
+    keyevent_t event = record->event;
+
+    switch (action.kind.id) {
+	/* Key and Mods */
+	case ACT_LMODS:
+	case ACT_RMODS:
+	    {
+		uint8_t mods = (action.kind.id == ACT_LMODS) ?  action.key.mods :
+								action.key.mods<<4;
+		if (event.pressed) {
+		    if (mods) {
+			add_weak_mods(mods);
+			send_keyboard_report();
+		    }
+		    register_code(action.key.code);
+		} else {
+		    unregister_code(action.key.code);
+		    if (mods) {
+			del_weak_mods(mods);
+			send_keyboard_report();
+		    }
+		}
+	    }
+	    break;
+	default:
+	    print("not supported.\n");
+	    break;
+    }
+}
+
+void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
+{
+    keyevent_t event = record->event;
+
     print("action_function called\n");
     print("id  = "); phex(id); print("\n");
     print("opt = "); phex(opt); print("\n");
@@ -347,6 +404,21 @@ void action_function(keyrecord_t *event, uint8_t id, uint8_t opt)
         _delay_ms(250);
         bootloader_jump(); // should not return
         print("not supported.\n");
+    }
+    else if (id == ANY_KEY) {
+	uint8_t col = event.key.col;
+	uint8_t row = event.key.row;
+	print("col = "); pdec(col); print("\n");
+	print("row = "); pdec(row); print("\n");
+
+	action_t action = { .code = ACTION_NO };
+
+        if (col == 3 && row == 10) { // W
+	    action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
+	}
+	if (action.code != ACTION_NO) {
+	    simon_hotkey(record, action);
+	}
     }
 }
 
