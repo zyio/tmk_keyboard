@@ -161,6 +161,20 @@ uint8_t matrix_scan(void)
     mcp23018_status = ergodox_left_leds_update();
 #endif
 
+#ifdef KEYMAP_SIMON
+    uint8_t layer = biton32(layer_state);
+
+    ergodox_board_led_off();
+    switch (layer) {
+        case 6:
+            ergodox_board_led_on();
+            break;
+        default:
+            // none
+            break;
+    }
+#endif
+
     for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
         select_row(i);
         matrix_row_t cols = read_cols(i);
