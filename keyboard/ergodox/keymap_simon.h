@@ -33,7 +33,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         FN6, FN1, LCTL,LALT,LGUI,
                                       FN8, HOME,
                                            END,
-                                 BSPC,FN10,SPC,
+                                 BSPC,LGUI,SPC,
         // right hand
              MINS,6,   7,   8,   9,   0,   EQL,
              FN6, F,   G,   C,   R,   L,   SLSH,
@@ -241,7 +241,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // left hand
         FN11,FN11,FN11,FN11,FN11,FN11,FN11,
         FN11,FN11,FN11,FN11,FN11,FN11,FN11,
-        FN11,FN11,FN11,FN11,FN11,FN11,
+        LSFT,FN11,FN11,FN11,FN11,FN11,
         FN11,FN11,FN11,FN11,FN11,FN11,FN11,
         FN11,FN11,FN11,FN11,FN11,
                                       FN11,FN11,
@@ -250,7 +250,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // right hand
              FN11,FN11,FN11,FN11,FN11,FN11,FN11,
              FN11,FN11,FN11,FN11,FN11,FN11,FN11,
-                  FN11,FN11,FN11,FN11,FN11,FN11,
+                  FN11,FN11,FN11,FN11,FN11,RSFT,
              FN11,FN11,FN11,FN11,FN11,FN11,FN11,
                        FN11,FN11,FN11,FN11,FN11,
         FN11,FN11,
@@ -349,14 +349,6 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_MACRO(PLOVER_SWITCH),                    // FN9 - Suspend/resume Plover
     ACTION_LAYER_MOMENTARY(8),                      // FN10 - Trigger the AnyKey layer
     ACTION_FUNCTION(ANY_KEY),                       // FN11 - AnyKey functional layer
-	/*
-	ACTION_MODS_TAP_KEY(MOD_LCTL, KC_U),            // FN09 - Ctrl + U
-	ACTION_MODS_TAP_KEY(MOD_RCTL, KC_H),            // FN10 - Ctrl + H
-	ACTION_MODS_TAP_KEY(MOD_LALT, KC_E),            // FN11 - Alt + E
-	ACTION_MODS_TAP_KEY(MOD_RALT, KC_T),            // FN12 - Alt + T
-	ACTION_MODS_TAP_KEY(MOD_LGUI, KC_O),            // FN13 - Win + O
-	ACTION_MODS_TAP_KEY(MOD_RGUI, KC_N),            // FN14 - Win + N
-	*/
 };
 
 void simon_hotkey(keyrecord_t *record, action_t action)
@@ -415,6 +407,12 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
 
         if (col == 3 && row == 10) { // W
 	    action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
+	}
+        else if (col == 1 && row == 2) { // ,
+	    action.code = ACTION_MODS_KEY(MOD_LSFT, KC_LBRC);
+	}
+        else if (col == 1 && row == 3) { // .
+	    action.code = ACTION_MODS_KEY(MOD_LSFT, KC_RBRC);
 	}
 	if (action.code != ACTION_NO) {
 	    simon_hotkey(record, action);
