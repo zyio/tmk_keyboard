@@ -32,7 +32,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         LSFT,A,   O,   E,   U,   I,
         LCTL,SCLN,Q,   J,   K,   X,   DEL,
         FN6, FN1, LCTL,LALT,LGUI,
-                                      FN9, HOME,
+                                      FN8, HOME,
                                            END,
                                  BSPC,LSFT,LGUI,
         // right hand
@@ -50,7 +50,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // left hand
         TRNS,F1,  F2,  F3,  F4,  F5,  F6,
         TRNS,LBRC,RBRC,FN11,FN11,EQL, TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,BSLS,
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
@@ -85,7 +85,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                        P0,  PDOT,PDOT,PENT,PENT,
         TRNS,TRNS,
         TRNS,
-        BSPC,TRNS,BSPC
+        ENT, TRNS,BSPC
     ),
 
     KEYMAP(  // layout: layer 3: F-keys only
@@ -281,7 +281,8 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 enum function_id {
     TEENSY_KEY,
     ANY_KEY,
-    PLOVER_SWITCH,
+    PLOVER_SWITCH_ON,
+    PLOVER_SWITCH_OFF,
 };
 
 enum macro_id {
@@ -300,8 +301,8 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_DEFAULT_LAYER_SET(5),                    // FN5 - switch to Layer5
     ACTION_LAYER_TAP_TOGGLE(2),                     // FN6 - numpad
     ACTION_FUNCTION(TEENSY_KEY),                    // FN7 - Teensy key
-    ACTION_LAYER_TOGGLE(6),                         // FN8 - toggle Plover
-    ACTION_FUNCTION(PLOVER_SWITCH),                 // FN9 - Suspend/resume Plover
+    ACTION_FUNCTION(PLOVER_SWITCH_ON),              // FN8 - enable Plover
+    ACTION_FUNCTION(PLOVER_SWITCH_OFF),             // FN9 - suspend Plover
     ACTION_LAYER_MOMENTARY(8),                      // FN10 - Trigger the AnyKey layer
     ACTION_FUNCTION(ANY_KEY),                       // FN11 - AnyKey functional layer
 };
@@ -352,11 +353,18 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         bootloader_jump(); // should not return
         print("not supported.\n");
     }
-    else if (id == PLOVER_SWITCH) {
+    else if (id == PLOVER_SWITCH_ON) {
 	if (event.pressed) {
-	    print("switching to plover layout...");
-	    action_macro_play(MACRO( D(A), D(W), D(F), D(J), D(P), U(A), U(W), U(F), U(J), U(P), END));
-	    layer_xor(1<<6);
+	    print("switching on plover layout...");
+	    action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
+	    layer_on(6);
+	}
+    }
+    else if (id == PLOVER_SWITCH_OFF) {
+	if (event.pressed) {
+	    print("switching off plover layout...");
+	    action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), D(L), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), U(L), END));
+	    layer_off(6);
 	}
     }
     else if (id == ANY_KEY) {
