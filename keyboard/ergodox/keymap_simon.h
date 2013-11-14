@@ -312,30 +312,30 @@ void simon_hotkey(keyrecord_t *record, action_t action)
     keyevent_t event = record->event;
 
     switch (action.kind.id) {
-	/* Key and Mods */
-	case ACT_LMODS:
-	case ACT_RMODS:
-	    {
-		uint8_t mods = (action.kind.id == ACT_LMODS) ?  action.key.mods :
-								action.key.mods<<4;
-		if (event.pressed) {
-		    if (mods) {
-			add_weak_mods(mods);
-			send_keyboard_report();
-		    }
-		    register_code(action.key.code);
-		} else {
-		    unregister_code(action.key.code);
-		    if (mods) {
-			del_weak_mods(mods);
-			send_keyboard_report();
-		    }
-		}
-	    }
-	    break;
-	default:
-	    print("not supported.\n");
-	    break;
+        /* Key and Mods */
+        case ACT_LMODS:
+        case ACT_RMODS:
+            {
+                uint8_t mods = (action.kind.id == ACT_LMODS) ?  action.key.mods :
+                                                                action.key.mods<<4;
+                if (event.pressed) {
+                    if (mods) {
+                        add_weak_mods(mods);
+                        send_keyboard_report();
+                    }
+                    register_code(action.key.code);
+                } else {
+                    unregister_code(action.key.code);
+                    if (mods) {
+                        del_weak_mods(mods);
+                        send_keyboard_report();
+                    }
+                }
+            }
+            break;
+        default:
+            print("not supported.\n");
+            break;
     }
 }
 
@@ -354,39 +354,39 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         print("not supported.\n");
     }
     else if (id == PLOVER_SWITCH_ON) {
-	if (event.pressed) {
-	    print("switching on plover layout...");
-	    action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
-	    layer_on(6);
-	}
+        if (event.pressed) {
+            print("switching on plover layout...");
+            action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
+            layer_on(6);
+        }
     }
     else if (id == PLOVER_SWITCH_OFF) {
-	if (event.pressed) {
-	    print("switching off plover layout...");
-	    action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), D(L), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), U(L), END));
-	    layer_off(6);
-	}
+        if (event.pressed) {
+            print("switching off plover layout...");
+            action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), D(L), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), U(L), END));
+            layer_off(6);
+        }
     }
     else if (id == ANY_KEY) {
-	uint8_t col = event.key.col;
-	uint8_t row = event.key.row;
-	print("col = "); pdec(col); print("\n");
-	print("row = "); pdec(row); print("\n");
+        uint8_t col = event.key.col;
+        uint8_t row = event.key.row;
+        print("col = "); pdec(col); print("\n");
+        print("row = "); pdec(row); print("\n");
 
-	action_t action = { .code = ACTION_NO };
+        action_t action = { .code = ACTION_NO };
 
         if (col == 3 && row == 10) { // W
-	    action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
-	}
+            action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
+        }
         else if (col == 1 && row == 3) { // ,
-	    action.code = ACTION_MODS_KEY(MOD_LSFT, KC_LBRC);
-	}
+            action.code = ACTION_MODS_KEY(MOD_LSFT, KC_LBRC);
+        }
         else if (col == 1 && row == 4) { // .
-	    action.code = ACTION_MODS_KEY(MOD_LSFT, KC_RBRC);
-	}
-	if (action.code != ACTION_NO) {
-	    simon_hotkey(record, action);
-	}
+            action.code = ACTION_MODS_KEY(MOD_LSFT, KC_RBRC);
+        }
+        if (action.code != ACTION_NO) {
+            simon_hotkey(record, action);
+        }
     }
 }
 
@@ -399,9 +399,9 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
 
     switch (id) {
         case MACRO_DEFAULT:
-		return (event.pressed ?
-			MACRO( D(A), D(W), D(F), D(J), D(P), U(A), U(W), U(F), U(J), U(P), END) :
-			MACRO_NONE);
+                return (event.pressed ?
+                        MACRO( D(A), D(W), D(F), D(J), D(P), U(A), U(W), U(F), U(J), U(P), END) :
+                        MACRO_NONE);
     }
     return MACRO_NONE;
 }
