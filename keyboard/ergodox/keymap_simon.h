@@ -48,7 +48,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     KEYMAP(  // layout: layer 1: "BlueShift"
         // left hand
-        TRNS,F1,  F2,  F3,  F4,  F5,  F6,
+        FN0, F1,  F2,  F3,  F4,  F5,  F6,
         TRNS,LBRC,RBRC,FN11,FN11,EQL, TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,BSLS,
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
@@ -90,7 +90,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     KEYMAP(  // layout: layer 3: F-keys only
         // left hand
-        TRNS,NO,  NO,  NO,  NO,  NO,  NO,  
+        FN0, NO,  NO,  NO,  NO,  NO,  NO,  
         TRNS,F13, F14, F15, F16, NO,  TRNS,
         TRNS,F17, F18, F19, F20, NO,  
         TRNS,F21, F22, F23, F24, NO,  TRNS,
@@ -343,9 +343,9 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
 {
     keyevent_t event = record->event;
 
-    print("action_function called\n");
-    print("id  = "); phex(id); print("\n");
-    print("opt = "); phex(opt); print("\n");
+    // print("action_function called\n");
+    // print("id  = "); phex(id); print("\n");
+    // print("opt = "); phex(opt); print("\n");
     if (id == TEENSY_KEY) {
         clear_keyboard();
         print("\n\nJump to bootloader... ");
@@ -355,14 +355,15 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
     }
     else if (id == PLOVER_SWITCH_ON) {
         if (event.pressed) {
-            print("switching on plover layout...");
-            action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
+            print("switching on plover layout...\n");
+            action_macro_play(MACRO(D(LANG5), U(LANG5), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
+            action_macro_play(MACRO(D(F23), U(F23), END));
             layer_on(6);
         }
     }
     else if (id == PLOVER_SWITCH_OFF) {
         if (event.pressed) {
-            print("switching off plover layout...");
+            print("switching off plover layout...\n");
             action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), D(L), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), U(L), END));
             layer_off(6);
         }
