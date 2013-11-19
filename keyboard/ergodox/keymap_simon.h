@@ -1,6 +1,7 @@
 #include "action_util.h"
 #include "action_layer.h"
 #define KC_SW0 KC_FN0
+#define DEBUG_ACTION
 
 static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Keymap 0: Default Layer
@@ -34,7 +35,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         FN6, FN1, LCTL,LALT,LGUI,
                                       FN8, HOME,
                                            END,
-                                 BSPC,LSFT,LGUI,
+                                 BSPC,FN12,LGUI,
         // right hand
              MINS,6,   7,   8,   9,   0,   EQL,
              FN6, F,   G,   C,   R,   L,   SLSH,
@@ -305,6 +306,7 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_FUNCTION(PLOVER_SWITCH_OFF),             // FN9 - suspend Plover
     ACTION_LAYER_MOMENTARY(8),                      // FN10 - Trigger the AnyKey layer
     ACTION_FUNCTION(ANY_KEY),                       // FN11 - AnyKey functional layer
+    ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // FN12 - tap toggle shift
 };
 
 void simon_hotkey(keyrecord_t *record, action_t action)
@@ -357,7 +359,6 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         if (event.pressed) {
             print("switching on plover layout...\n");
             action_macro_play(MACRO(D(LANG5), U(LANG5), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
-            action_macro_play(MACRO(D(F23), U(F23), END));
             layer_on(6);
         }
     }
