@@ -116,7 +116,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         FN7, NO,  PGUP,UP,  PGDN,NO,  TRNS,
         TRNS,HOME,LEFT,DOWN,RGHT,END, 
         TRNS,NO,  NO,  END, HOME,NO,  TRNS,
-        FN5, TRNS,TRNS,LALT,LGUI,
+        FN5, TRNS,TRNS,FN13,FN14,
                                       TRNS,TRNS,
                                            TRNS,
                                  LCTL,LSFT,TRNS,
@@ -287,7 +287,8 @@ enum function_id {
 };
 
 enum macro_id {
-    MACRO_DEFAULT,
+    MACRO_PASSWORD1,
+    MACRO_PASSWORD2,
 };
 
 /*
@@ -307,6 +308,8 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_LAYER_MOMENTARY(8),                      // FN10 - Trigger the AnyKey layer
     ACTION_FUNCTION(ANY_KEY),                       // FN11 - AnyKey functional layer
     ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // FN12 - tap toggle shift
+    ACTION_MACRO(MACRO_PASSWORD1),                  // FN13 - password1
+    ACTION_MACRO(MACRO_PASSWORD2),                  // FN14 - password2
 };
 
 void simon_hotkey(keyrecord_t *record, action_t action)
@@ -400,10 +403,9 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
     keyevent_t event = record->event;
 
     switch (id) {
-        case MACRO_DEFAULT:
-                return (event.pressed ?
-                        MACRO( D(A), D(W), D(F), D(J), D(P), U(A), U(W), U(F), U(J), U(P), END) :
-                        MACRO_NONE);
+#include "keymap_simon_passwords.h"
+        default:
+                return MACRO( END );
     }
     return MACRO_NONE;
 }
