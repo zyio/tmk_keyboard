@@ -26,49 +26,139 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      *                                 `--------------------'       `--------------------'
      */
 
+    // BASE LAYERS
+
     KEYMAP(  // layout: layer 0: customized dvorak
         // left hand
         ESC, 1,   2,   3,   4,   5,   BSLS,
-        TAB, QUOT,COMM,DOT, P,   Y,   FN4,
+        TAB, QUOT,COMM,DOT, P,   Y,   FN2,
         LSFT,A,   O,   E,   U,   I,
         LCTL,SCLN,Q,   J,   K,   X,   DEL,
-        FN6, FN1, LCTL,LALT,LGUI,
-                                      FN8, HOME,
+        FN3, FN1, LCTL,LALT,LGUI,
+                                      FN5, HOME,
                                            END,
-                                 BSPC,FN12,LGUI,
+                                 BSPC,FN9, LGUI,
         // right hand
              MINS,6,   7,   8,   9,   0,   EQL,
-             FN6, F,   G,   C,   R,   L,   SLSH,
+             FN3, F,   G,   C,   R,   L,   SLSH,
                   D,   H,   T,   N,   S,   RSFT,
              DEL, B,   M,   W,   V,   Z,   RCTL,
-                       LEFT,DOWN,UP,  RGHT,FN4,
+                       LEFT,DOWN,UP,  RGHT,FN2,
         PGUP,MPLY,
         PGDN,
         ENT, FN1, SPC
     ),
 
-    KEYMAP(  // layout: layer 1: "BlueShift"
+    KEYMAP(  // layer 1 : qwerty
         // left hand
-        FN0, F1,  F2,  F3,  F4,  F5,  F6,
-        TRNS,LBRC,RBRC,FN11,FN11,EQL, TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,BSLS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,1,   2,   3,   4,   5,   TRNS,
+        TRNS,Q,   W,   E,   R,   T,   TRNS,
+        TRNS,A,   S,   D,   F,   G,
+        TRNS,Z,   X,   C,   V,   B,   TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
                                            TRNS,
-                                 ESC, TRNS,TRNS,
+                                 TRNS,TRNS,TRNS,
         // right hand
-             F7,  F8,  F9,  F10, F11, F12, MINS,
-             TRNS,PGUP,HOME,UP,  END, SLSH,RBRC,
-                  PGDN,LEFT,DOWN,RGHT,MINS,TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                       RGUI,RALT,TRNS,TRNS,TRNS,
+             TRNS,6,   7,   8,   9,   0,   MINS,
+             TRNS,Y,   U,   I,   O,   P,   RBRC,
+                  H,   J,   K,   L,   SCLN,QUOT,
+             TRNS,N,   M,   COMM,DOT, SLSH,RSFT,
+                       TRNS,TRNS,TRNS,TRNS,TRNS,
         TRNS,TRNS,
         TRNS,
         TRNS,TRNS,TRNS
     ),
 
-    KEYMAP(  // layout: layer 2: mouse + numpad
+    KEYMAP(  // layer 2 : reserved
+        // left hand
+        TRNS,1,   2,   3,   4,   5,   TRNS,
+        TRNS,Q,   W,   E,   R,   T,   TRNS,
+        TRNS,A,   S,   D,   F,   G,
+        TRNS,Z,   X,   C,   V,   B,   TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 TRNS,TRNS,TRNS,
+        // right hand
+             TRNS,6,   7,   8,   9,   0,   MINS,
+             TRNS,Y,   U,   I,   O,   P,   RBRC,
+                  H,   J,   K,   L,   SCLN,QUOT,
+             TRNS,N,   M,   COMM,DOT, SLSH,RSFT,
+                       TRNS,TRNS,TRNS,TRNS,TRNS,
+        RALT,RCTL,
+        PGUP,
+        PGDN,ENT, SPC
+    ),
+
+    KEYMAP(  // layer 3 : reserved
+        // left hand
+        TRNS,1,   2,   3,   4,   5,   TRNS,
+        TRNS,Q,   W,   E,   R,   T,   TRNS,
+        TRNS,A,   S,   D,   F,   G,
+        TRNS,Z,   X,   C,   V,   B,   TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 TRNS,TRNS,TRNS,
+        // right hand
+             TRNS,6,   7,   8,   9,   0,   MINS,
+             TRNS,Y,   U,   I,   O,   P,   RBRC,
+                  H,   J,   K,   L,   SCLN,QUOT,
+             TRNS,N,   M,   COMM,DOT, SLSH,RSFT,
+                       TRNS,TRNS,TRNS,TRNS,TRNS,
+        RALT,RCTL,
+        PGUP,
+        PGDN,ENT, SPC
+    ),
+
+    // PLOVER (SPECIAL CASE)
+
+    KEYMAP(  // layout: layer 4: Steno for Plover
+        // left hand
+        FN6, NO,  NO,  NO,  NO,  NO,  NO,  
+        NO,  1,   2,   3,   4,   5,   NO,  
+        NO,  Q,   W,   E,   R,   T,  
+        NO,  A,   S,   D,   F,   G,   NO,
+        NO,  NO,  NO,  NO,  NO,  
+                                      FN6, NO,  
+                                           NO,  
+                                 C,   V,   NO,  
+        // right hand
+             NO,  NO,  NO,  NO,  NO,  NO,  NO,  
+             NO,  6,   7,   8,   9,   0,   NO,  
+                  Y,   U,   I,   O,   P,   LBRC,
+             NO,  H,   J,   K,   L,   SCLN,QUOT,
+                       NO,  NO,  NO,  NO,  NO,  
+        TRNS,TRNS,  
+        TRNS,  
+        NO,  N,   M   
+    ),
+
+    KEYMAP(  // layout: layer 5: reserved
+        // left hand
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 TRNS,TRNS,TRNS,
+        // right hand
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                       TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,
+        TRNS,
+        TRNS,TRNS,TRNS
+    ),
+
+    // MODIFIERS THAT MIGHT BE STICKY
+
+    KEYMAP(  // layout: layer 6: mouse + numpad
         // left hand
         FN0, NO,  NO,  NO,  NO,  PAUS,PSCR,
         TRNS,WH_L,WH_U,WH_D,WH_R,BTN2,TRNS,
@@ -89,7 +179,113 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         ENT, TRNS,BSPC
     ),
 
-    KEYMAP(  // layout: layer 3: F-keys only
+    KEYMAP(  // layout: layer 7: F-keys + cursor
+        // left hand
+        FN0, F1,  F2,  F3,  F4,  F5,  F6,
+        FN4, NO,  PGUP,UP,  PGDN,NO,  TRNS,
+        TRNS,HOME,LEFT,DOWN,RGHT,END, 
+        TRNS,NO,  NO,  END, HOME,NO,  TRNS,
+        TRNS,TRNS,TRNS,FN10,FN11,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 LCTL,LSFT,TRNS,
+        // right hand
+             F7,  F8,  F9,  F10, F11, F12, MINS,
+             TRNS,NO,  PGUP,UP,  PGDN, NO,  FN4,
+                  HOME,LEFT,DOWN,RGHT,END, TRNS,
+             TRNS,NO,  NO,  NO,  NO,  NO,  TRNS,
+                       RGUI,RALT,TRNS,TRNS,TRNS,
+        TRNS,TRNS,
+        TRNS, TRNS,RSFT,RCTL
+    ),
+
+    KEYMAP(  // layout: layer 8: "BlueShift"
+        // left hand
+        FN0, F1,  F2,  F3,  F4,  F5,  F6,
+        TRNS,LBRC,RBRC,FN8, FN8, EQL, TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,BSLS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 ESC, TRNS,TRNS,
+        // right hand
+             F7,  F8,  F9,  F10, F11, F12, MINS,
+             TRNS,PGUP,HOME,UP,  END, SLSH,RBRC,
+                  PGDN,LEFT,DOWN,RGHT,MINS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                       RGUI,RALT,TRNS,TRNS,TRNS,
+        TRNS,TRNS,
+        TRNS,
+        TRNS,TRNS,TRNS
+    ),
+
+    KEYMAP(  // layout: layer 9: reserved
+        // left hand
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 TRNS,TRNS,TRNS,
+        // right hand
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                       TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,
+        TRNS,
+        TRNS,TRNS,TRNS
+    ),
+
+    KEYMAP(  // layout: layer 10: reserved
+        // left hand
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 TRNS,TRNS,TRNS,
+        // right hand
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                       TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,
+        TRNS,
+        TRNS,TRNS,TRNS
+    ),
+
+    // MODIFIERS THAT WON'T BE STICKY
+
+    KEYMAP(  // layout: layer 11: Special function-driven commands (any-key)
+        // left hand
+        FN8, FN8, FN8, FN8, FN8, FN8, FN8, 
+        FN8, FN8, FN8, FN8, FN8, FN8, FN8, 
+        LSFT,FN8, FN8, FN8, FN8, FN8, 
+        FN8, FN8, FN8, FN8, FN8, FN8, FN8, 
+        FN8, FN8, FN8, FN8, FN8, 
+                                      FN8, FN8, 
+                                           FN8, 
+                                 FN8, FN10,FN8, 
+        // right hand
+             FN8, FN8, FN8, FN8, FN8, FN8, FN8, 
+             FN8, FN8, FN8, FN8, FN8, FN8, FN8, 
+                  FN8, FN8, FN8, FN8, FN8, RSFT,
+             FN8, FN8, FN8, FN8, FN8, FN8, FN8, 
+                       FN8, FN8, FN8, FN8, FN8, 
+        FN8, FN8, 
+        FN8, 
+        FN8, FN8, FN8
+    ),
+
+    KEYMAP(  // layout: layer 12: F-keys only
         // left hand
         FN0, NO,  NO,  NO,  NO,  NO,  NO,  
         TRNS,F13, F14, F15, F16, NO,  TRNS,
@@ -110,110 +306,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,RSFT,RCTL
     ),
 
-    KEYMAP(  // layout: layer 4: F-keys + cursor
-        // left hand
-        FN0, F1,  F2,  F3,  F4,  F5,  F6,
-        FN7, NO,  PGUP,UP,  PGDN,NO,  TRNS,
-        TRNS,HOME,LEFT,DOWN,RGHT,END, 
-        TRNS,NO,  NO,  END, HOME,NO,  TRNS,
-        FN5, TRNS,TRNS,FN13,FN14,
-                                      TRNS,TRNS,
-                                           TRNS,
-                                 LCTL,LSFT,TRNS,
-        // right hand
-             F7,  F8,  F9,  F10, F11, F12, MINS,
-             TRNS,NO,  PGUP,UP,  PGDN, NO,  FN7,
-                  HOME,LEFT,DOWN,RGHT,END, TRNS,
-             TRNS,NO,  NO,  NO,  NO,  NO,  TRNS,
-                       RGUI,RALT,TRNS,TRNS,TRNS,
-        TRNS,TRNS,
-        TRNS, TRNS,RSFT,RCTL
-    ),
-    KEYMAP(  // layout: layer 5: Workman layout
-        // left hand
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,Q,   D,   R,   W,   B,   TRNS,
-        TRNS,A,   S,   H,   T,   G,
-        TRNS,Z,   X,   M,   C,   V,   TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,
-                                      TRNS,TRNS,
-                                           TRNS,
-                                 TRNS,TRNS,TRNS,
-        // right hand
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-             TRNS,J,   F,   U,   P,   4,   TRNS,
-                  Y,   N,   E,   O,   I,   TRNS,
-             TRNS,K,   L,   TRNS,TRNS,TRNS,TRNS,
-                       TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,
-        TRNS,
-        TRNS,TRNS,TRNS
-    ),
-
-    KEYMAP(  // layout: layer 6: Steno for Plover
-        // left hand
-        FN9, NO,  NO,  NO,  NO,  NO,  NO,  
-        NO,  1,   2,   3,   4,   5,   NO,  
-        NO,  Q,   W,   E,   R,   T,  
-        NO,  A,   S,   D,   F,   G,   NO,
-        NO,  NO,  NO,  NO,  NO,  
-                                      FN9, NO,  
-                                           NO,  
-                                 C,   V,   NO,  
-        // right hand
-             NO,  NO,  NO,  NO,  NO,  NO,  NO,  
-             NO,  6,   7,   8,   9,   0,   NO,  
-                  Y,   U,   I,   O,   P,   LBRC,
-             NO,  H,   J,   K,   L,   SCLN,QUOT,
-                       NO,  NO,  NO,  NO,  NO,  
-        TRNS,TRNS,  
-        TRNS,  
-        NO,  N,   M   
-    ),
-
-    KEYMAP(  // layout: layer 7: transparent on edges, all others are empty
-        // left hand
-        TRNS,NO,  NO,  NO,  NO,  NO,  NO,  
-        TRNS,NO,  NO,  NO,  NO,  NO,  TRNS,
-        TRNS,NO,  NO,  NO,  NO,  NO,  
-        TRNS,NO,  NO,  NO,  NO,  NO,  TRNS,
-        TRNS,TRNS,TRNS,LALT,LGUI,
-                                      TRNS,TRNS,
-                                           TRNS,
-                                 LCTL,LSFT,TRNS,
-        // right hand
-             NO,  NO,  NO,  NO,  NO,  NO,  TRNS,
-             TRNS,NO,  NO,  NO,  NO,  NO,  TRNS,
-                  NO,  NO,  NO,  NO,  NO,  TRNS,
-             TRNS,NO,  NO,  NO,  NO,  NO,  TRNS,
-                       RGUI,RALT,TRNS,TRNS,TRNS,
-        TRNS,TRNS,
-        TRNS,
-        TRNS,RSFT,RCTL
-    ),
-
-    KEYMAP(  // layout: layer 8: Special function-driven commands
-        // left hand
-        FN11,FN11,FN11,FN11,FN11,FN11,FN11,
-        FN11,FN11,FN11,FN11,FN11,FN11,FN11,
-        LSFT,FN11,FN11,FN11,FN11,FN11,
-        FN11,FN11,FN11,FN11,FN11,FN11,FN11,
-        FN11,FN11,FN11,FN11,FN11,
-                                      FN11,FN11,
-                                           FN11,
-                                 FN11,FN10,FN11,
-        // right hand
-             FN11,FN11,FN11,FN11,FN11,FN11,FN11,
-             FN11,FN11,FN11,FN11,FN11,FN11,FN11,
-                  FN11,FN11,FN11,FN11,FN11,RSFT,
-             FN11,FN11,FN11,FN11,FN11,FN11,FN11,
-                       FN11,FN11,FN11,FN11,FN11,
-        FN11,FN11,
-        FN11,
-        FN11,FN11,FN11
-    ),
-
-    KEYMAP(  // layout: layer N: fully transparent
+    KEYMAP(  // layout: layer 13: reserved
         // left hand
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
@@ -233,6 +326,30 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,
         TRNS,TRNS,TRNS
     ),
+
+    KEYMAP(  // layout: layer 14: reserved
+        // left hand
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 TRNS,TRNS,TRNS,
+        // right hand
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                       TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,
+        TRNS,
+        TRNS,TRNS,TRNS
+    ),
+
+    // TEMPLATES
+
 /*
     KEYMAP(  // layout: layer N: transparent on edges, all others are empty
         // left hand
@@ -296,20 +413,17 @@ enum macro_id {
  */
 static const uint16_t PROGMEM fn_actions[] = {
     ACTION_LAYER_SET(0, ON_PRESS),                  // FN0 - set layer0 only
-    ACTION_LAYER_TAP_TOGGLE(1),                     // FN1 - switch to BlueShift
-    ACTION_LAYER_TOGGLE(2),                         // FN2 - switch to Layer2
-    ACTION_LAYER_MOMENTARY(3),                      // FN3 - push Layer3
-    ACTION_LAYER_TAP_TOGGLE(4),                     // FN4 - movement tap/toggle
-    ACTION_DEFAULT_LAYER_SET(5),                    // FN5 - switch to Layer5
-    ACTION_LAYER_TAP_TOGGLE(2),                     // FN6 - numpad
-    ACTION_FUNCTION(TEENSY_KEY),                    // FN7 - Teensy key
-    ACTION_FUNCTION(PLOVER_SWITCH_ON),              // FN8 - enable Plover
-    ACTION_FUNCTION(PLOVER_SWITCH_OFF),             // FN9 - suspend Plover
-    ACTION_LAYER_MOMENTARY(8),                      // FN10 - Trigger the AnyKey layer
-    ACTION_FUNCTION(ANY_KEY),                       // FN11 - AnyKey functional layer
-    ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // FN12 - tap toggle shift
-    ACTION_MACRO(MACRO_PASSWORD1),                  // FN13 - password1
-    ACTION_MACRO(MACRO_PASSWORD2),                  // FN14 - password2
+    ACTION_LAYER_TAP_TOGGLE(8),                     // FN1 - switch to BlueShift
+    ACTION_LAYER_TAP_TOGGLE(7),                     // FN2 - movement tap/toggle
+    ACTION_LAYER_TAP_TOGGLE(6),                     // FN3 - numpad
+    ACTION_FUNCTION(TEENSY_KEY),                    // FN4 - Teensy key
+    ACTION_FUNCTION(PLOVER_SWITCH_ON),              // FN5 - enable Plover
+    ACTION_FUNCTION(PLOVER_SWITCH_OFF),             // FN6 - suspend Plover
+    ACTION_LAYER_MOMENTARY(11),                     // FN7 - Trigger the AnyKey layer
+    ACTION_FUNCTION(ANY_KEY),                       // FN8 - AnyKey functional layer
+    ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // FN9 - tap toggle shift
+    ACTION_MACRO(MACRO_PASSWORD1),                  // FN10 - password1
+    ACTION_MACRO(MACRO_PASSWORD2),                  // FN11 - password2
 };
 
 void simon_hotkey(keyrecord_t *record, action_t action)
@@ -362,14 +476,14 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         if (event.pressed) {
             print("switching on plover layout...\n");
             action_macro_play(MACRO(D(LANG5), U(LANG5), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
-            layer_on(6);
+            layer_on(4);
         }
     }
     else if (id == PLOVER_SWITCH_OFF) {
         if (event.pressed) {
             print("switching off plover layout...\n");
             action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), D(L), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), U(L), END));
-            layer_off(6);
+            layer_off(4);
         }
     }
     else if (id == ANY_KEY) {
