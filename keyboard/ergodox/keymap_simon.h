@@ -30,7 +30,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     KEYMAP(  // layout: layer 0: customized dvorak
         // left hand
-        ESC, 1,   2,   3,   4,   5,   BSLS,
+        ESC, FN12,FN12,FN12,FN12,FN12,BSLS,
         TAB, QUOT,COMM,DOT, P,   Y,   FN2,
         LSFT,A,   O,   E,   U,   I,
         LCTL,SCLN,Q,   J,   K,   X,   DEL,
@@ -39,7 +39,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                            END,
                                  BSPC,FN9, LGUI,
         // right hand
-             MINS,6,   7,   8,   9,   0,   EQL,
+             MINS,FN12,FN12,FN12,FN12,FN12,EQL,
              FN3, F,   G,   C,   R,   L,   SLSH,
                   D,   H,   T,   N,   S,   RSFT,
              DEL, B,   M,   W,   V,   Z,   RCTL,
@@ -401,6 +401,7 @@ enum function_id {
     ANY_KEY,
     PLOVER_SWITCH_ON,
     PLOVER_SWITCH_OFF,
+    NUM_ROW,
 };
 
 enum macro_id {
@@ -424,6 +425,7 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // FN9 - tap toggle shift
     ACTION_MACRO(MACRO_PASSWORD1),                  // FN10 - password1
     ACTION_MACRO(MACRO_PASSWORD2),                  // FN11 - password2
+    ACTION_FUNCTION(NUM_ROW),                       // FN12 - symbolized number row
 };
 
 void simon_hotkey(keyrecord_t *record, action_t action)
@@ -505,6 +507,65 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         }
         if (action.code != ACTION_NO) {
             simon_hotkey(record, action);
+        }
+    }
+    else if (id == NUM_ROW) {
+        uint8_t col = event.key.col;
+        uint8_t row = event.key.row;
+        uint8_t savedmods = get_mods();
+        uint8_t shiftpressed = (savedmods & (MOD_LSFT | MOD_RSFT));
+
+        action_t action = { .code = ACTION_NO };
+
+        if (col == 0) { // Number row
+            uint8_t keycode = KC_NO;
+            switch (row) {
+                case 1:
+                    keycode = KC_1;
+                    break;
+                case 2:
+                    keycode = KC_2;
+                    break;
+                case 3:
+                    keycode = KC_3;
+                    break;
+                case 4:
+                    keycode = KC_4;
+                    break;
+                case 5:
+                    keycode = KC_5;
+                    break;
+                case 8:
+                    keycode = KC_6;
+                    break;
+                case 9:
+                    keycode = KC_7;
+                    break;
+                case 10:
+                    keycode = KC_8;
+                    break;
+                case 11:
+                    keycode = KC_9;
+                    break;
+                case 12:
+                    keycode = KC_0;
+                    break;
+                default:
+                    break;
+            }
+            if (keycode != KC_NO) {
+                action.code = ACTION_MODS_KEY(MOD_LSFT, keycode);
+            }
+        }
+        if (action.code != ACTION_NO) {
+            if (shiftpressed) {
+                action.key.mods = 0;
+                del_mods(MOD_LSFT | MOD_RSFT);
+            }
+            simon_hotkey(record, action);
+            if (shiftpressed) {
+                set_mods(savedmods);
+            }
         }
     }
 }
