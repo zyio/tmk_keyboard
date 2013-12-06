@@ -30,6 +30,27 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     KEYMAP(  // layout: layer 0: customized dvorak
         // left hand
+        ESC, 1,   2,   3,   4,   5,   BSLS,
+        TAB, QUOT,COMM,DOT, P,   Y,   FN2,
+        LSFT,A,   O,   E,   U,   I,
+        LCTL,SCLN,Q,   J,   K,   X,   DEL,
+        FN3, FN1, LCTL,LALT,LGUI,
+                                      FN5, HOME,
+                                           END,
+                                 BSPC,FN9, LGUI,
+        // right hand
+             MINS,6,   7,   8,   9,   0,   EQL,
+             FN3, F,   G,   C,   R,   L,   SLSH,
+                  D,   H,   T,   N,   S,   RSFT,
+             DEL, B,   M,   W,   V,   Z,   RCTL,
+                       LEFT,DOWN,UP,  RGHT,FN2,
+        PGUP,MPLY,
+        PGDN,
+        ENT, FN1, SPC
+    ),
+
+    KEYMAP(  // layout: layer 1: customized dvorak with symbol row switched
+        // left hand
         ESC, FN12,FN12,FN12,FN12,FN12,BSLS,
         TAB, QUOT,COMM,DOT, P,   Y,   FN2,
         LSFT,A,   O,   E,   U,   I,
@@ -49,7 +70,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         ENT, FN1, SPC
     ),
 
-    KEYMAP(  // layer 1 : qwerty
+    KEYMAP(  // layer 2 : qwerty
         // left hand
         TRNS,1,   2,   3,   4,   5,   TRNS,
         TRNS,Q,   W,   E,   R,   T,   TRNS,
@@ -62,33 +83,12 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // right hand
              TRNS,6,   7,   8,   9,   0,   MINS,
              TRNS,Y,   U,   I,   O,   P,   RBRC,
-                  H,   J,   K,   L,   SCLN,QUOT,
+                  H,   J,   K,   L,   SCLN,RSFT,
              TRNS,N,   M,   COMM,DOT, SLSH,RSFT,
                        TRNS,TRNS,TRNS,TRNS,TRNS,
         TRNS,TRNS,
         TRNS,
         TRNS,TRNS,TRNS
-    ),
-
-    KEYMAP(  // layer 2 : reserved
-        // left hand
-        TRNS,1,   2,   3,   4,   5,   TRNS,
-        TRNS,Q,   W,   E,   R,   T,   TRNS,
-        TRNS,A,   S,   D,   F,   G,
-        TRNS,Z,   X,   C,   V,   B,   TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,
-                                      TRNS,TRNS,
-                                           TRNS,
-                                 TRNS,TRNS,TRNS,
-        // right hand
-             TRNS,6,   7,   8,   9,   0,   MINS,
-             TRNS,Y,   U,   I,   O,   P,   RBRC,
-                  H,   J,   K,   L,   SCLN,QUOT,
-             TRNS,N,   M,   COMM,DOT, SLSH,RSFT,
-                       TRNS,TRNS,TRNS,TRNS,TRNS,
-        RALT,RCTL,
-        PGUP,
-        PGDN,ENT, SPC
     ),
 
     KEYMAP(  // layer 3 : reserved
