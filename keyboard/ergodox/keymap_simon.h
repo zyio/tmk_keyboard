@@ -28,28 +28,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     // BASE LAYERS
 
-    KEYMAP(  // layout: layer 0: customized dvorak
-        // left hand
-        ESC, 1,   2,   3,   4,   5,   BSLS,
-        TAB, QUOT,COMM,DOT, P,   Y,   FN2,
-        LSFT,A,   O,   E,   U,   I,
-        LCTL,SCLN,Q,   J,   K,   X,   DEL,
-        FN3, FN1, LCTL,LALT,LGUI,
-                                      FN5, HOME,
-                                           END,
-                                 BSPC,FN9, LGUI,
-        // right hand
-             MINS,6,   7,   8,   9,   0,   EQL,
-             FN3, F,   G,   C,   R,   L,   SLSH,
-                  D,   H,   T,   N,   S,   RSFT,
-             DEL, B,   M,   W,   V,   Z,   RCTL,
-                       LEFT,DOWN,UP,  RGHT,FN2,
-        PGUP,MPLY,
-        PGDN,
-        ENT, FN1, SPC
-    ),
-
-    KEYMAP(  // layout: layer 1: customized dvorak with symbol row switched
+    KEYMAP(  // layout: layer 0: customized dvorak with symbol row switched
         // left hand
         ESC, FN12,FN12,FN12,FN12,FN12,BSLS,
         TAB, QUOT,COMM,DOT, P,   Y,   FN2,
@@ -61,6 +40,27 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                  BSPC,FN9, LGUI,
         // right hand
              MINS,FN12,FN12,FN12,FN12,FN12,EQL,
+             FN3, F,   G,   C,   R,   L,   SLSH,
+                  D,   H,   T,   N,   S,   RSFT,
+             DEL, B,   M,   W,   V,   Z,   RCTL,
+                       LEFT,DOWN,UP,  RGHT,FN2,
+        PGUP,MPLY,
+        PGDN,
+        ENT, FN1, SPC
+    ),
+
+    KEYMAP(  // layout: layer 1: customized dvorak
+        // left hand
+        ESC, 1,   2,   3,   4,   5,   BSLS,
+        TAB, QUOT,COMM,DOT, P,   Y,   FN2,
+        LSFT,A,   O,   E,   U,   I,
+        LCTL,SCLN,Q,   J,   K,   X,   DEL,
+        FN3, FN1, LCTL,LALT,LGUI,
+                                      FN5, HOME,
+                                           END,
+                                 BSPC,FN9, LGUI,
+        // right hand
+             MINS,6,   7,   8,   9,   0,   EQL,
              FN3, F,   G,   C,   R,   L,   SLSH,
                   D,   H,   T,   N,   S,   RSFT,
              DEL, B,   M,   W,   V,   Z,   RCTL,
@@ -514,6 +514,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         uint8_t row = event.key.row;
         uint8_t savedmods = get_mods();
         uint8_t shiftpressed = (savedmods & (MOD_LSFT | MOD_RSFT));
+        uint8_t guipressed = (savedmods & (MOD_LGUI | MOD_RGUI));
 
         action_t action = { .code = ACTION_NO };
 
@@ -558,7 +559,10 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             }
         }
         if (action.code != ACTION_NO) {
-            if (shiftpressed) {
+            if (guipressed) {
+                action.key.mods = 0;
+            }
+            else if (shiftpressed) {
                 action.key.mods = 0;
                 del_mods(MOD_LSFT | MOD_RSFT);
             }
