@@ -514,7 +514,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         uint8_t row = event.key.row;
         uint8_t savedmods = get_mods();
         uint8_t shiftpressed = (savedmods & (MOD_LSFT | MOD_RSFT));
-        uint8_t guipressed = (savedmods & (MOD_LGUI | MOD_RGUI));
+        uint8_t othermodspressed = (savedmods & (MOD_LGUI | MOD_RGUI | MOD_LCTL | MOD_RCTL | MOD_LALT | MOD_RALT ));
 
         action_t action = { .code = ACTION_NO };
 
@@ -559,7 +559,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             }
         }
         if (action.code != ACTION_NO) {
-            if (guipressed) {
+            if (othermodspressed) {
                 action.key.mods = 0;
             }
             else if (shiftpressed) {
