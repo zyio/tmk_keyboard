@@ -202,8 +202,8 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KEYMAP(  // layout: layer 8: "BlueShift"
         // left hand
         FN0, F1,  F2,  F3,  F4,  F5,  F6,
-        TRNS,LBRC,RBRC,FN8, FN8, EQL, TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,BSLS,
+        TRNS,LBRC,RBRC,FN8, FN8, BSLS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,EQL, 
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
