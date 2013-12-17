@@ -202,7 +202,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KEYMAP(  // layout: layer 8: "BlueShift"
         // left hand
         FN0, F1,  F2,  F3,  F4,  F5,  F6,
-        TRNS,LBRC,RBRC,FN8, FN8, BSLS,TRNS,
+        TRNS,TRNS,FN12,FN12,TRNS,BSLS,TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,EQL, 
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,
@@ -401,7 +401,7 @@ enum function_id {
     ANY_KEY,
     PLOVER_SWITCH_ON,
     PLOVER_SWITCH_OFF,
-    NUM_ROW,
+    SHIFT_SWITCH,
 };
 
 enum macro_id {
@@ -425,7 +425,7 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // FN9 - tap toggle shift
     ACTION_MACRO(MACRO_PASSWORD1),                  // FN10 - password1
     ACTION_MACRO(MACRO_PASSWORD2),                  // FN11 - password2
-    ACTION_FUNCTION(NUM_ROW),                       // FN12 - symbolized number row
+    ACTION_FUNCTION(SHIFT_SWITCH),                  // FN12 - symbolized number row
 };
 
 void simon_hotkey(keyrecord_t *record, action_t action)
@@ -499,17 +499,11 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         if (col == 3 && row == 10) { // W
             action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
         }
-        else if (col == 1 && row == 3) { // ,
-            action.code = ACTION_MODS_KEY(MOD_LSFT, KC_LBRC);
-        }
-        else if (col == 1 && row == 4) { // .
-            action.code = ACTION_MODS_KEY(MOD_LSFT, KC_RBRC);
-        }
         if (action.code != ACTION_NO) {
             simon_hotkey(record, action);
         }
     }
-    else if (id == NUM_ROW) {
+    else if (id == SHIFT_SWITCH) {
         uint8_t col = event.key.col;
         uint8_t row = event.key.row;
         uint8_t savedmods = get_mods();
@@ -517,9 +511,9 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         uint8_t othermodspressed = (savedmods & (MOD_LGUI | MOD_RGUI | MOD_LCTL | MOD_RCTL | MOD_LALT | MOD_RALT ));
 
         action_t action = { .code = ACTION_NO };
+        uint8_t keycode = KC_NO;
 
         if (col == 0) { // Number row
-            uint8_t keycode = KC_NO;
             switch (row) {
                 case 1:
                     keycode = KC_1;
@@ -554,9 +548,21 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
                 default:
                     break;
             }
-            if (keycode != KC_NO) {
-                action.code = ACTION_MODS_KEY(MOD_LSFT, keycode);
+        }
+        if (col == 1) { // next row
+            switch (row) {
+                case 2:
+                    keycode = KC_LBRC;
+                    break;
+                case 3:
+                    keycode = KC_RBRC;
+                    break;
+                default:
+                    break;
             }
+        }
+        if (keycode != KC_NO) {
+            action.code = ACTION_MODS_KEY(MOD_LSFT, keycode);
         }
         if (action.code != ACTION_NO) {
             if (othermodspressed) {
