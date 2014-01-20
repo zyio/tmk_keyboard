@@ -39,11 +39,11 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                            END,
                                  BSPC,FN9, LGUI,
         // right hand
-             MINS,FN12,FN12,FN12,FN12,FN12,EQL,
+             MINS,FN12,FN12,FN12,FN12,FN12,MPLY,
              FN3, F,   G,   C,   R,   L,   SLSH,
                   D,   H,   T,   N,   S,   RSFT,
              DEL, B,   M,   W,   V,   Z,   RCTL,
-                       LEFT,DOWN,UP,  RGHT,FN2,
+                       MPRV,MNXT,FN2,FN2,FN2,
         PGUP,MPLY,
         PGDN,
         ENT, FN1, SPC
