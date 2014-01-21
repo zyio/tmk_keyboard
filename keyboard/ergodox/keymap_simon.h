@@ -40,10 +40,10 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                  BSPC,FN9, LGUI,
         // right hand
              MINS,FN12,FN12,FN12,FN12,FN12,MPLY,
-             FN3, F,   G,   C,   R,   L,   SLSH,
+             FN3, F,   G,   C,   R,   L,   MNXT,
                   D,   H,   T,   N,   S,   RSFT,
              DEL, B,   M,   W,   V,   Z,   RCTL,
-                       MPRV,MNXT,FN2,FN2,FN2,
+                       MPRV,MNXT,APP, FN8,FN2,
         PGUP,MPLY,
         PGDN,
         ENT, FN1, SPC
@@ -125,11 +125,11 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                            NO,  
                                  C,   V,   NO,  
         // right hand
-             NO,  NO,  NO,  NO,  NO,  NO,  NO,  
-             NO,  6,   7,   8,   9,   0,   NO,  
+             NO,  NO,  NO,  NO,  NO,  NO,  TRNS,
+             NO,  6,   7,   8,   9,   0,   TRNS,
                   Y,   U,   I,   O,   P,   LBRC,
              NO,  H,   J,   K,   L,   SCLN,QUOT,
-                       NO,  NO,  NO,  NO,  NO,  
+                       TRNS,TRNS,NO,  NO,  NO,  
         TRNS,TRNS,  
         TRNS,  
         NO,  N,   M   
@@ -161,15 +161,15 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KEYMAP(  // layout: layer 6: mouse + numpad
         // left hand
         FN0, NO,  NO,  NO,  NO,  PAUS,PSCR,
-        TRNS,WH_L,WH_U,WH_D,WH_R,BTN2,TRNS,
-        TRNS,MS_L,MS_U,MS_D,MS_R,BTN1,
+        TRNS,NO,  WH_U,MS_U,WH_D,BTN2,TRNS,
+        TRNS,NO,  MS_L,MS_D,MS_R,BTN1,
         TRNS,NO,  NO,  NO,  NO,  BTN3,TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
                                            TRNS,
                                  TRNS,TRNS,TRNS,
         // right hand
-             SLCK,NLCK,EQL, PSLS,PAST,PMNS,BSPC,
+             SLCK,NLCK,EQL, PSLS,PAST,PMNS,TRNS,
              TRNS,NO,  P7,  P8,  P9,  PMNS,BSPC,
                   NO,  P4,  P5,  P6,  PPLS,PENT,
              TRNS,NO,  P1,  P2,  P3,  PPLS,PENT,
@@ -203,7 +203,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // left hand
         FN0, F1,  F2,  F3,  F4,  F5,  F6,
         TRNS,TRNS,FN12,FN12,PSCR,BSLS,TRNS,
-        TRNS,TRNS,TAB, TRNS,TRNS,EQL, 
+        TRNS,APP, TAB, TRNS,TRNS,EQL, 
         TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
@@ -491,16 +491,22 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
     else if (id == ANY_KEY) {
         uint8_t col = event.key.col;
         uint8_t row = event.key.row;
-        print("col = "); pdec(col); print("\n");
-        print("row = "); pdec(row); print("\n");
 
         action_t action = { .code = ACTION_NO };
 
         if (col == 3 && row == 10) { // W
             action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
         }
+        if (col == 4 && row == 12) { // Alt+tab
+            action.code = ACTION_MODS_KEY(MOD_LALT, KC_TAB);
+        }
         if (action.code != ACTION_NO) {
             simon_hotkey(record, action);
+        }
+        else
+        {
+            print("col = "); pdec(col); print("\n");
+            print("row = "); pdec(row); print("\n");
         }
     }
     else if (id == SHIFT_SWITCH) {
