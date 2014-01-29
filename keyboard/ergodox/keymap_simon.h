@@ -202,9 +202,9 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KEYMAP(  // layout: layer 8: "BlueShift"
         // left hand
         FN0, F1,  F2,  F3,  F4,  F5,  F6,
-        TRNS,TRNS,FN12,FN12,PSCR,BSLS,TRNS,
-        TRNS,APP, TAB, TRNS,TRNS,EQL, 
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,GRV, FN12,FN12,PSCR,BSLS,TRNS,  // the FN12 entries are for inverted brace/bracket keys
+        TRNS,APP, TAB, EQL, TRNS,INS, 
+        TRNS,TRNS,TRNS,TRNS,CAPS,TRNS,TRNS,
         TRNS,TRNS,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
                                            TRNS,
