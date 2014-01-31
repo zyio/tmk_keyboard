@@ -291,7 +291,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,F13, F14, F15, F16, NO,  TRNS,
         TRNS,F17, F18, F19, F20, NO,  
         TRNS,F21, F22, F23, F24, NO,  TRNS,
-        TRNS,TRNS,TRNS,LALT,LGUI,
+        FN13,FN13,TRNS,LALT,LGUI,
                                       TRNS,TRNS,
                                            TRNS,
                                  LCTL,LSFT,TRNS,
@@ -401,6 +401,7 @@ enum function_id {
     ANY_KEY,
     PLOVER_SWITCH,
     SHIFT_SWITCH,
+    FKEY_SWITCH,
 };
 
 enum macro_id {
@@ -426,7 +427,7 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_MACRO(MACRO_PASSWORD1),                  // FN10 - password1
     ACTION_MACRO(MACRO_PASSWORD2),                  // FN11 - password2
     ACTION_FUNCTION(SHIFT_SWITCH),                  // FN12 - symbolized number row
-    ACTION_LAYER_MOMENTARY(12),                     // FN13 - trigger Fkey layer
+    ACTION_FUNCTION(FKEY_SWITCH),                   // FN13 - trigger Fkey layer and get rid of it appropriately
 };
 
 void simon_hotkey(keyrecord_t *record, action_t action)
@@ -581,6 +582,23 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             simon_hotkey(record, action);
             if (shiftpressed) {
                 set_mods(savedmods);
+            }
+        }
+    }
+    else if (id == FKEY_SWITCH) {
+        uint8_t row = event.key.row;
+        if (event.pressed) {
+            layer_on(12);
+        }
+        else {
+            if ((row == 0) && (layer_state & 1<<6)) { // left button and from numpad; out-of-order release
+                layer_off(6);
+            }
+            else if ((row == 1) && (layer_state & 1<<8)) { // right button and from BlueShift; out-of-order release
+                layer_off(8);
+            }
+            else {
+                layer_off(12);
             }
         }
     }
