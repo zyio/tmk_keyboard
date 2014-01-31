@@ -116,12 +116,12 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     KEYMAP(  // layout: layer 4: Steno for Plover
         // left hand
-        FN6, NO,  NO,  NO,  NO,  NO,  NO,  
+        FN5, NO,  NO,  NO,  NO,  NO,  NO,  
         NO,  1,   2,   3,   4,   5,   NO,  
         NO,  Q,   W,   E,   R,   T,  
         NO,  A,   S,   D,   F,   G,   NO,
         NO,  NO,  NO,  NO,  NO,  
-                                      FN6, NO,  
+                                      FN5, NO,  
                                            NO,  
                                  C,   V,   NO,  
         // right hand
@@ -399,8 +399,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 enum function_id {
     TEENSY_KEY,
     ANY_KEY,
-    PLOVER_SWITCH_ON,
-    PLOVER_SWITCH_OFF,
+    PLOVER_SWITCH,
     SHIFT_SWITCH,
 };
 
@@ -419,8 +418,8 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_LAYER_TAP_TOGGLE(7),                     // FN2 - movement tap/toggle
     ACTION_LAYER_TAP_TOGGLE(6),                     // FN3 - numpad
     ACTION_FUNCTION(TEENSY_KEY),                    // FN4 - Teensy key
-    ACTION_FUNCTION(PLOVER_SWITCH_ON),              // FN5 - enable Plover
-    ACTION_FUNCTION(PLOVER_SWITCH_OFF),             // FN6 - suspend Plover
+    ACTION_FUNCTION(PLOVER_SWITCH),                 // FN5 - enable Plover
+    ACTION_FUNCTION(PLOVER_SWITCH),                 // ** FN6 - suspend Plover (OUT OF USE)
     ACTION_LAYER_MOMENTARY(11),                     // FN7 - Trigger the AnyKey layer
     ACTION_FUNCTION(ANY_KEY),                       // FN8 - AnyKey functional layer
     ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // ** FN9 - tap toggle shift (OUT OF USE)
@@ -476,18 +475,17 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         bootloader_jump(); // should not return
         print("not supported.\n");
     }
-    else if (id == PLOVER_SWITCH_ON) {
+    else if (id == PLOVER_SWITCH) {
         if (event.pressed) {
-            print("switching on plover layout...\n");
-            action_macro_play(MACRO(D(LANG5), U(LANG5), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
-            layer_on(4);
-        }
-    }
-    else if (id == PLOVER_SWITCH_OFF) {
-        if (event.pressed) {
-            print("switching off plover layout...\n");
-            action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), D(L), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), U(L), END));
-            layer_off(4);
+            if (layer_state & 1<<4) { // plover is already on
+                print("switching off plover layout...\n");
+                action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), D(L), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), U(L), END));
+                layer_off(4);
+            } else {
+                print("switching on plover layout...\n");
+                action_macro_play(MACRO(D(LANG5), U(LANG5), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
+                layer_on(4);
+            }
         }
     }
     else if (id == ANY_KEY) {
