@@ -37,7 +37,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         FN3, FN1, LCTL,LALT,LGUI,
                                       FN5, HOME,
                                            END,
-                                 BSPC,FN9, LGUI,
+                                 BSPC,LSFT,LGUI,
         // right hand
              MINS,FN12,FN12,FN12,FN12,FN12,MPLY,
              FN3, F,   G,   C,   R,   L,   MNXT,
@@ -58,7 +58,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         FN3, FN1, LCTL,LALT,LGUI,
                                       FN5, HOME,
                                            END,
-                                 BSPC,FN9, LGUI,
+                                 BSPC,LSFT,LGUI,
         // right hand
              MINS,6,   7,   8,   9,   0,   EQL,
              FN3, F,   G,   C,   R,   L,   SLSH,
@@ -164,7 +164,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,NO,  WH_U,MS_U,WH_D,BTN2,TRNS,
         TRNS,NO,  MS_L,MS_D,MS_R,BTN1,
         TRNS,NO,  NO,  NO,  NO,  BTN3,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,FN13,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
                                            TRNS,
                                  TRNS,TRNS,TRNS,
@@ -205,7 +205,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,GRV, FN12,FN12,PSCR,BSLS,TRNS,  // the FN12 entries are for inverted brace/bracket keys
         TRNS,APP, TAB, EQL, TRNS,INS, 
         TRNS,TRNS,TRNS,TRNS,CAPS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,
+        FN13,TRNS,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
                                            TRNS,
                                  ESC, TRNS,TRNS,
@@ -296,11 +296,11 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                            TRNS,
                                  LCTL,LSFT,TRNS,
         // right hand
-             NO,  NO,  NO,  NO,  NO,  NO,  TRNS,
-             TRNS,NO,  F1,  F2,  F3,  F4,  TRNS,
-                  NO,  F5,  F6,  F7,  F8,  TRNS,
-             TRNS,NO,  F9,  F10, F11, F12, TRNS,
-                       RGUI,RALT,TRNS,TRNS,TRNS,
+             NO,  NO,  F10, F11, F12, NO,  TRNS,
+             TRNS,NO,  F7,  F8,  F9,  NO,  TRNS,
+                  NO,  F4,  F5,  F6,  NO,  TRNS,
+             TRNS,NO,  F1,  F2,  F3,  NO,  TRNS,
+                       RGUI,RALT,RCTL,TRNS,TRNS,
         TRNS,TRNS,
         TRNS,
         TRNS,RSFT,RCTL
@@ -407,6 +407,7 @@ enum function_id {
 enum macro_id {
     MACRO_PASSWORD1,
     MACRO_PASSWORD2,
+    MACRO_PASSWORD3,
 };
 
 /*
@@ -422,10 +423,11 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_FUNCTION(PLOVER_SWITCH_OFF),             // FN6 - suspend Plover
     ACTION_LAYER_MOMENTARY(11),                     // FN7 - Trigger the AnyKey layer
     ACTION_FUNCTION(ANY_KEY),                       // FN8 - AnyKey functional layer
-    ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // FN9 - tap toggle shift
+    ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // ** FN9 - tap toggle shift (OUT OF USE)
     ACTION_MACRO(MACRO_PASSWORD1),                  // FN10 - password1
     ACTION_MACRO(MACRO_PASSWORD2),                  // FN11 - password2
     ACTION_FUNCTION(SHIFT_SWITCH),                  // FN12 - symbolized number row
+    ACTION_LAYER_MOMENTARY(12),                     // FN13 - trigger Fkey layer
 };
 
 void simon_hotkey(keyrecord_t *record, action_t action)
