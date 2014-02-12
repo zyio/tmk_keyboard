@@ -204,7 +204,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         FN0, F1,  F2,  F3,  F4,  F5,  F6,
         TRNS,GRV, FN12,FN12,PSCR,BSLS,TRNS,  // the FN12 entries are for inverted brace/bracket keys
         TRNS,APP, TAB, EQL, TRNS,INS, 
-        TRNS,TRNS,TRNS,TRNS,CAPS,TRNS,TRNS,
+        TRNS,TRNS,FN8, TRNS,CAPS,TRNS,TRNS,  // quit (alt+f4)
         FN13,TRNS,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
                                            TRNS,
@@ -495,6 +495,9 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
 
         action_t action = { .code = ACTION_NO };
 
+        if (col == 3 && row == 2) { // Q
+            action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
+        }
         if (col == 3 && row == 10) { // W
             action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
         }
