@@ -614,10 +614,10 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
 {
     keyevent_t event = record->event;
 
-    switch (id) {
+    if (event.pressed) {
+        switch (id) {
 #include "keymap_simon_passwords.h"
-        default:
-                return MACRO( END );
+        }
     }
     return MACRO_NONE;
 }
