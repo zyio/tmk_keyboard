@@ -115,5 +115,8 @@ cub: all
 simon: OPT_DEFS += -DKEYMAP_SIMON
 simon: all
 
+plover: OPT_DEFS += -DKEYMAP_PLOVER
+plover: all
+
 .DEFAULT_GOAL := simon
 
