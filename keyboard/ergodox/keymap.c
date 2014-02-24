@@ -83,7 +83,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keymap_micro.h"
 #elif defined(KEYMAP_CUB)
 #include "keymap_cub.h"
-#elif defined(KEYMAP_plover)
+#elif defined(KEYMAP_PLOVER)
 #include "keymap_plover.h"
 #elif defined(KEYMAP_SIMON)
 #include "keymap_simon.h"
