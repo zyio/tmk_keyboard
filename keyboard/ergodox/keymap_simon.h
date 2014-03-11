@@ -480,11 +480,11 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         if (event.pressed) {
             if (layer_state & 1<<4) { // plover is already on
                 print("switching off plover layout...\n");
-                action_macro_play(MACRO( D(A), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), D(L), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), U(L), END));
+                action_macro_play(MACRO( D(F23), U(F23), END));
                 layer_off(4);
             } else {
                 print("switching on plover layout...\n");
-                action_macro_play(MACRO(D(LANG5), U(LANG5), D(W), D(P), D(F), D(SCLN), D(LBRC), D(QUOT), D(D), D(A), U(W), U(P), U(F), U(SCLN), U(LBRC), U(QUOT), U(D), END));
+                action_macro_play(MACRO( D(F24), U(F24), END));
                 layer_on(4);
             }
         }
