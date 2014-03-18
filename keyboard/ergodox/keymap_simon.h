@@ -170,13 +170,13 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                  TRNS,TRNS,TRNS,
         // right hand
              SLCK,NLCK,EQL, PSLS,PAST,PMNS,TRNS,
-             TRNS,NO,  P7,  P8,  P9,  PMNS,BSPC,
-                  NO,  P4,  P5,  P6,  PPLS,PENT,
-             TRNS,NO,  P1,  P2,  P3,  PPLS,PENT,
+             TRNS,BSPC,P7,  P8,  P9,  PMNS,BSPC,
+                  BSPC,P4,  P5,  P6,  PPLS,PENT,
+             BSPC,BSPC,P1,  P2,  P3,  PPLS,PENT,
                        P0,  PDOT,PDOT,PENT,PENT,
         TRNS,TRNS,
         TRNS,
-        ENT, TRNS,BSPC
+        ENT, TRNS,TRNS
     ),
 
     KEYMAP(  // layout: layer 7: F-keys + cursor
