@@ -49,7 +49,28 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         ENT, FN1, SPC
     ),
 
-    KEYMAP(  // layout: layer 1: customized dvorak
+    KEYMAP(  // layout: layer 1: transparent (this gets triggered more than I'd like)
+        // left hand
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,TRNS,TRNS,TRNS,
+                                      TRNS,TRNS,
+                                           TRNS,
+                                 TRNS,TRNS,TRNS,
+        // right hand
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
+                       TRNS,TRNS,TRNS,TRNS,TRNS,
+        TRNS,TRNS,
+        TRNS,
+        TRNS,TRNS,TRNS
+    ),
+
+    KEYMAP(  // layout: layer 2: customized dvorak
         // left hand
         ESC, 1,   2,   3,   4,   5,   BSLS,
         TAB, QUOT,COMM,DOT, P,   Y,   FN2,
@@ -70,7 +91,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         ENT, FN1, SPC
     ),
 
-    KEYMAP(  // layer 2 : qwerty
+    KEYMAP(  // layer 3 : qwerty
         // left hand
         TRNS,1,   2,   3,   4,   5,   TRNS,
         TRNS,Q,   W,   E,   R,   T,   TRNS,
@@ -89,27 +110,6 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,TRNS,
         TRNS,
         TRNS,TRNS,TRNS
-    ),
-
-    KEYMAP(  // layer 3 : reserved
-        // left hand
-        TRNS,1,   2,   3,   4,   5,   TRNS,
-        TRNS,Q,   W,   E,   R,   T,   TRNS,
-        TRNS,A,   S,   D,   F,   G,
-        TRNS,Z,   X,   C,   V,   B,   TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,
-                                      TRNS,TRNS,
-                                           TRNS,
-                                 TRNS,TRNS,TRNS,
-        // right hand
-             TRNS,6,   7,   8,   9,   0,   MINS,
-             TRNS,Y,   U,   I,   O,   P,   RBRC,
-                  H,   J,   K,   L,   SCLN,QUOT,
-             TRNS,N,   M,   COMM,DOT, SLSH,RSFT,
-                       TRNS,TRNS,TRNS,TRNS,TRNS,
-        RALT,RCTL,
-        PGUP,
-        PGDN,ENT, SPC
     ),
 
     // PLOVER (SPECIAL CASE)
