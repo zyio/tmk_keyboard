@@ -478,6 +478,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
     }
     else if (id == PLOVER_SWITCH) {
         if (event.pressed) {
+            clear_mods();
             if (layer_state & 1<<4) { // plover is already on
                 print("switching off plover layout...\n");
                 action_macro_play(MACRO( D(F23), U(F23), END));
