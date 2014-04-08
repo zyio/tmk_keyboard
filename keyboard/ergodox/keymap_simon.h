@@ -598,15 +598,14 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             layer_on(12);
         }
         else {
-            if ((row == 0) && (layer_state & 1<<6)) { // left button and from numpad; out-of-order release
-                layer_off(6);
+            if (
+                    (row == 0) && (layer_state & 1<<6) // left button and from numpad; out-of-order release
+                 || (row == 1) && (layer_state & 1<<8) // right button and from BlueShift; out-of-order release
+               ) { 
+                layer_invert(6);
+                layer_invert(8);
             }
-            else if ((row == 1) && (layer_state & 1<<8)) { // right button and from BlueShift; out-of-order release
-                layer_off(8);
-            }
-            else {
-                layer_off(12);
-            }
+            layer_off(12);
         }
     }
 }
