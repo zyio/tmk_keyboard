@@ -202,7 +202,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KEYMAP(  // layout: layer 8: "BlueShift"
         // left hand
         FN0, F1,  F2,  F3,  F4,  F5,  F6,
-        TRNS,GRV, FN12,FN12,PSCR,BSLS,TRNS,  // the FN12 entries are for inverted brace/bracket keys
+        TRNS,FN12,FN12,FN12,PSCR,BSLS,TRNS,  // the FN12 entries are for tilde and inverted brace/bracket keys
         TRNS,APP, TAB, EQL, TRNS,INS, 
         TRNS,TRNS,FN8, TRNS,CAPS,TRNS,TRNS,  // quit (alt+f4)
         FN13,TRNS,TRNS,TRNS,TRNS,
@@ -562,6 +562,9 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         }
         if (col == 1) { // next row
             switch (row) {
+                case 1:
+                    keycode = KC_GRV;
+                    break;
                 case 2:
                     keycode = KC_LBRC;
                     break;
