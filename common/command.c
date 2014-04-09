@@ -152,6 +152,11 @@ static void print_eeconfig(void)
     print(".swap_grave_esc: "); print_dec(kc.swap_grave_esc); print("\n");
     print(".swap_backslash_backspace: "); print_dec(kc.swap_backslash_backspace); print("\n");
 
+    host_config_t hc;
+    hc.raw = eeconfig_read_host();
+    print("host_config.raw: "); print_hex8(hc.raw); print("\n");
+    print(".nkro: "); print_dec(hc.nkro); print("\n");
+
 #ifdef BACKLIGHT_ENABLE
     backlight_config_t bc;
     bc.raw = eeconfig_read_backlight();

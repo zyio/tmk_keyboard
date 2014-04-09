@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdbool.h>
 
 
-#define EECONFIG_MAGIC_NUMBER                       (uint16_t)0xFEED
+#define EECONFIG_MAGIC_NUMBER                       (uint16_t)0xFEEF
 
 /* eeprom parameteter address */
 #define EECONFIG_MAGIC                              (uint16_t *)0
@@ -30,7 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EECONFIG_DEFAULT_LAYER                      (uint8_t *)3
 #define EECONFIG_KEYMAP                             (uint8_t *)4
 #define EECONFIG_MOUSEKEY_ACCEL                     (uint8_t *)5
-#define EECONFIG_BACKLIGHT                          (uint8_t *)6
+#define EECONFIG_HOST                               (uint8_t *)6
+#define EECONFIG_BACKLIGHT                          (uint8_t *)7
 
 
 /* debug bit */
@@ -48,6 +49,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EECONFIG_KEYMAP_SWAP_GRAVE_ESC              (1<<5)
 #define EECONFIG_KEYMAP_SWAP_BACKSLASH_BACKSPACE    (1<<6)
 
+/* hostconf bit */
+#define EECONFIG_HOST_NKRO                          (1<<0)
 
 bool eeconfig_is_enabled(void);
 

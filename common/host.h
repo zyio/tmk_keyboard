@@ -23,9 +23,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "host_driver.h"
 
-
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef BOOTMAGIC_ENABLE
+/* NOTE: Not portable. Bit field order depends on implementation */
+typedef union {
+    uint8_t raw;
+    struct {
+        bool nkro:1;
+        uint8_t reserved:7;
+    };
+} host_config_t;
+host_config_t host_config;
 #endif
 
 #ifdef NKRO_ENABLE

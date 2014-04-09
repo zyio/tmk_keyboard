@@ -5,6 +5,7 @@
 #include "bootloader.h"
 #include "debug.h"
 #include "keymap.h"
+#include "host.h"
 #include "action_layer.h"
 #include "eeconfig.h"
 #include "bootmagic.h"
@@ -95,6 +96,14 @@ void bootmagic(void)
         default_layer = eeconfig_read_default_layer();
         default_layer_set((uint32_t)default_layer);
     }
+
+    /* host config */
+    host_config.raw = eeconfig_read_host();
+    if (bootmagic_scan_keycode(BOOTMAGIC_HOST_NKRO)) {
+        host_config.nkro = !host_config.nkro;
+    }
+    keyboard_nkro = host_config.nkro;
+    eeconfig_write_host(host_config.raw);
 }
 
 static bool scan_keycode(uint8_t keycode)

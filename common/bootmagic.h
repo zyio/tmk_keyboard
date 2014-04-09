@@ -91,6 +91,14 @@
 #endif
 
 
+/*
+ * USB host config
+ */
+#ifndef BOOTMAGIC_HOST_NKRO
+#define BOOTMAGIC_HOST_NKRO              KC_N
+#endif
+
+
 void bootmagic(void);
 bool bootmagic_scan_keycode(uint8_t keycode);
 
