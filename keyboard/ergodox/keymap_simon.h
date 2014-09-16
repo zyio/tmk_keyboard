@@ -458,20 +458,19 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         if (col == 3 && row == 1) { // :
             action.code = ACTION_MODS_KEY(MOD_LSFT, KC_SCLN);
         }
-        if (col == 3 && row == 2) { // Q
+        else if (col == 3 && row == 2) { // Q
             action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
         }
-        if (col == 3 && row == 10) { // W
+        else if (col == 3 && row == 10) { // W
             action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
         }
-        if (col == 4 && row == 12) { // Alt+tab
+        else if (col == 4 && row == 12) { // Alt+tab
             action.code = ACTION_MODS_KEY(MOD_LALT, KC_TAB);
         }
         if (action.code != ACTION_NO) {
             simon_hotkey(record, action);
         }
-        else
-        {
+        else if (!event.pressed) {
             print("col = "); pdec(col); print("\n");
             print("row = "); pdec(row); print("\n");
         }
