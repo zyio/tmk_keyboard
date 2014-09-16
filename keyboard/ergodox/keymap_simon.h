@@ -306,48 +306,6 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,RSFT,RCTL
     ),
 
-    KEYMAP(  // layout: layer 13: reserved
-        // left hand
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,
-                                      TRNS,TRNS,
-                                           TRNS,
-                                 TRNS,TRNS,TRNS,
-        // right hand
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                       TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,
-        TRNS,
-        TRNS,TRNS,TRNS
-    ),
-
-    KEYMAP(  // layout: layer 14: reserved
-        // left hand
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,
-                                      TRNS,TRNS,
-                                           TRNS,
-                                 TRNS,TRNS,TRNS,
-        // right hand
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                       TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,
-        TRNS,
-        TRNS,TRNS,TRNS
-    ),
-
     // TEMPLATES
 
 /*
