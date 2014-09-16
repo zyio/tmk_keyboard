@@ -477,23 +477,20 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         print("not supported.\n");
     }
     else if (id == PLOVER_SWITCH) {
+        action_t action = { .code = ACTION_NO };
+        action.code = ACTION_KEY((layer_state & 1<<4) ? KC_F23 : KC_F24);
         if (!event.pressed) {
             uint8_t savedmods = get_mods();
             uint8_t shiftpressed = (savedmods & (MOD_LSFT | MOD_RSFT));
             if (shiftpressed) {
-                print("plover: reset\n");
-                action_macro_play(MACRO( D(LSFT), T(F24), U(LSFT), END));
-                layer_off(4);
-            } else if (!(layer_state & 1<<4)) { // plover needs to be turned on
-                print("plover: on\n");
-                action_macro_play(MACRO( T(F24), END));
-                layer_on(4);
+                layer_off(4); // shift+plover is to reset, so don't toggle the plover layer
             } else {
-                print("plover: off\n");
-                action_macro_play(MACRO( T(F23), END));
-                layer_off(4);
+                layer_invert(4);
             }
-            clear_mods();
+            //clear_mods();
+        }
+        if (action.code != ACTION_NO) {
+            simon_hotkey(record, action);
         }
     }
     else if (id == ANY_KEY) {
