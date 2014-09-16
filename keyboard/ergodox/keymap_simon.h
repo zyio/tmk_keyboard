@@ -163,7 +163,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         FN0, NO,  NO,  NO,  NO,  PAUS,PSCR,
         TRNS,NO,  WH_U,MS_U,WH_D,BTN2,TRNS,
         TRNS,NO,  MS_L,MS_D,MS_R,BTN1,
-        TRNS,NO,  NO,  NO,  NO,  BTN3,TRNS,
+        TRNS,FN8, NO,  NO,  NO,  BTN3,TRNS,
         TRNS,FN13,TRNS,TRNS,TRNS,
                                       TRNS,TRNS,
                                            TRNS,
@@ -496,6 +496,9 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
 
         action_t action = { .code = ACTION_NO };
 
+        if (col == 3 && row == 1) { // :
+            action.code = ACTION_MODS_KEY(MOD_LSFT, KC_SCLN);
+        }
         if (col == 3 && row == 2) { // Q
             action.code = ACTION_MODS_KEY(MOD_LALT, KC_F4);
         }
