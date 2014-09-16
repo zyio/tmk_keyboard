@@ -30,13 +30,13 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     KEYMAP(  // layout: layer 0: customized dvorak with symbol row switched
         // left hand
-        ESC, FN12,FN12,FN12,FN12,FN12,BSLS,
+        ESC, FN12,FN12,FN12,FN12,FN12,F17,
         TAB, QUOT,COMM,DOT, P,   Y,   FN2,
         LSFT,A,   O,   E,   U,   I,
         LCTL,SCLN,Q,   J,   K,   X,   DEL,
         FN3, FN1, LCTL,LALT,LGUI,
-                                      FN5, HOME,
-                                           END,
+                                      FN5, F15,
+                                           F16,
                                  BSPC,LSFT,LGUI,
         // right hand
              MINS,FN12,FN12,FN12,FN12,FN12,MPLY,
@@ -44,8 +44,8 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                   D,   H,   T,   N,   S,   RSFT,
              DEL, B,   M,   W,   V,   Z,   RCTL,
                        MPRV,MNXT,APP, FN8,FN2,
-        PGUP,MPLY,
-        PGDN,
+        F13, MPLY,
+        F14,
         ENT, FN1, SPC
     ),
 
