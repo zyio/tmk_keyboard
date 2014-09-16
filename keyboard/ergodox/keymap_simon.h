@@ -118,7 +118,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // left hand
         FN5, NO,  NO,  NO,  NO,  NO,  NO,  
         NO,  1,   2,   3,   4,   5,   NO,  
-        NO,  Q,   W,   E,   R,   T,  
+        TRNS,Q,   W,   E,   R,   T,  
         NO,  A,   S,   D,   F,   G,   NO,
         NO,  NO,  NO,  NO,  NO,  
                                       FN5, NO,  
@@ -477,9 +477,14 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
         print("not supported.\n");
     }
     else if (id == PLOVER_SWITCH) {
-        if (event.pressed) {
-            clear_mods();
-            if (layer_state & 1<<4) { // plover is already on
+        if (!event.pressed) {
+            uint8_t savedmods = get_mods();
+            uint8_t shiftpressed = (savedmods & (MOD_LSFT | MOD_RSFT));
+            if (shiftpressed) {
+                print("resetting plover...\n");
+                action_macro_play(MACRO( D(LSFT), D(F24), U(F24), U(LSFT), END));
+                layer_off(4);
+            } else if (layer_state & 1<<4) { // plover is already on
                 print("switching off plover layout...\n");
                 action_macro_play(MACRO( D(F23), U(F23), END));
                 layer_off(4);
@@ -488,6 +493,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
                 action_macro_play(MACRO( D(F24), U(F24), END));
                 layer_on(4);
             }
+            clear_mods();
         }
     }
     else if (id == ANY_KEY) {
