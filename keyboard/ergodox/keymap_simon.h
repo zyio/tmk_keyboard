@@ -1,7 +1,5 @@
 #include "action_util.h"
 #include "action_layer.h"
-#define KC_SW0 KC_FN0
-#define DEBUG_ACTION
 
 static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Keymap 0: Default Layer
