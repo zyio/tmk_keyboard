@@ -471,7 +471,7 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
     // print("opt = "); phex(opt); print("\n");
     if (id == TEENSY_KEY) {
         clear_keyboard();
-        print("\n\nJump to bootloader... ");
+        print("\n\nJump to bootloader...");
         _delay_ms(250);
         bootloader_jump(); // should not return
         print("not supported.\n");
@@ -481,17 +481,17 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt)
             uint8_t savedmods = get_mods();
             uint8_t shiftpressed = (savedmods & (MOD_LSFT | MOD_RSFT));
             if (shiftpressed) {
-                print("resetting plover...\n");
-                action_macro_play(MACRO( D(LSFT), D(F24), U(F24), U(LSFT), END));
+                print("plover: reset\n");
+                action_macro_play(MACRO( D(LSFT), T(F24), U(LSFT), END));
                 layer_off(4);
-            } else if (layer_state & 1<<4) { // plover is already on
-                print("switching off plover layout...\n");
-                action_macro_play(MACRO( D(F23), U(F23), END));
-                layer_off(4);
-            } else {
-                print("switching on plover layout...\n");
-                action_macro_play(MACRO( D(F24), U(F24), END));
+            } else if (!(layer_state & 1<<4)) { // plover needs to be turned on
+                print("plover: on\n");
+                action_macro_play(MACRO( T(F24), END));
                 layer_on(4);
+            } else {
+                print("plover: off\n");
+                action_macro_play(MACRO( T(F23), END));
+                layer_off(4);
             }
             clear_mods();
         }
