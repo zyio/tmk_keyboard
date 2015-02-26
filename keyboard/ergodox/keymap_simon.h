@@ -41,7 +41,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
              FN3, F,   G,   C,   R,   L,   MNXT,
                   D,   H,   T,   N,   S,   RSFT,
              DEL, B,   M,   W,   V,   Z,   RCTL,
-                       MPRV,MNXT,APP, FN8,FN2,
+                       SPC, RALT,APP, FN8,FN2,
         F13, MPLY,
         F14,
         ENT, FN1, SPC
@@ -169,7 +169,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // right hand
              SLCK,NLCK,EQL, PSLS,PAST,PMNS,TRNS,
              TRNS,BSPC,P7,  P8,  P9,  PMNS,BSPC,
-                  BSPC,P4,  P5,  P6,  PPLS,PENT,
+                  BSPC,P4,  P5,  P6,  PMNS,PENT,
              BSPC,BSPC,P1,  P2,  P3,  PPLS,PENT,
                        P0,  PDOT,PDOT,PENT,PENT,
         TRNS,TRNS,
@@ -377,7 +377,7 @@ static const uint16_t PROGMEM fn_actions[] = {
     ACTION_FUNCTION(TEENSY_KEY),                    // FN4 - Teensy key
     ACTION_FUNCTION(PLOVER_SWITCH),                 // FN5 - enable Plover
     ACTION_FUNCTION(PLOVER_SWITCH),                 // ** FN6 - suspend Plover (OUT OF USE)
-    ACTION_LAYER_MOMENTARY(11),                     // FN7 - Trigger the AnyKey layer
+    ACTION_LAYER_MOMENTARY(11),                     // ** FN7 - Trigger the AnyKey layer (OUT OF USE)
     ACTION_FUNCTION(ANY_KEY),                       // FN8 - AnyKey functional layer
     ACTION_MODS_TAP_TOGGLE(MOD_LSFT),               // ** FN9 - tap toggle shift (OUT OF USE)
     ACTION_MACRO(MACRO_PASSWORD1),                  // FN10 - password1
