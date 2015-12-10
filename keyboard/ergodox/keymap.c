@@ -85,29 +85,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keymap_micro.h"
 #elif defined(KEYMAP_CUB)
 #include "keymap_cub.h"
+#elif defined(KEYMAP_PLOVER)
+#include "keymap_plover.h"
+#elif defined(KEYMAP_SIMON)
+#include "keymap_simon.h"
 #else
 
 static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    KEYMAP(  // layer 0 : default
-        // left hand
-        EQL, 1,   2,   3,   4,   5,   ESC,
-        BSLS,Q,   W,   E,   R,   T,   FN2,
-        TAB, A,   S,   D,   F,   G,
-        LSFT,Z,   X,   C,   V,   B,   FN1,
-        LGUI,GRV, BSLS,LEFT,RGHT,
-                                      LCTL,LALT,
-                                           HOME,
-                                 BSPC,DEL, END,
-        // right hand
-             FN3, 6,   7,   8,   9,   0,   MINS,
-             LBRC,Y,   U,   I,   O,   P,   RBRC,
-                  H,   J,   K,   L,   SCLN,QUOT,
-             FN1, N,   M,   COMM,DOT, SLSH,RSFT,
-                       LEFT,DOWN,UP,  RGHT,RGUI,
-        RALT,RCTL,
-        PGUP,
-        PGDN,ENT, SPC
-    ),
+  KEYMAP(  // layer 0 : default
+      // left hand
+      ESC, 1,   2,   3,   4,   5,   MINS,
+      TAB,Q,   W,   E,   R,   T,   LBRC,
+      LCTL, A,   S,   D,   F,   G,
+      LSFT,Z,   X,   C,   V,   B,   FN1,
+      LGUI,GRV, NUHS,QUOT,BSLS,
+                                    LCTL,LALT,
+                                         HOME,
+                               SPC,BSPC, END,
+      // right hand
+           EQL, 6,   7,   8,   9,   0,   DEL,
+           RBRC,Y,   U,   I,   O,   P,   NUBS,
+                H,   J,   K,   L,   SCLN,QUOT,
+           FN1, N,   M,   COMM,DOT, SLSH,RSFT,
+                     LEFT,DOWN,UP,  RGHT,RGUI,
+      PSCR,INS,
+      PGUP,
+      PGDN,ENT, SPC
+  ),
 
     KEYMAP(  // layer 1 : function and symbol keys
         // left hand
@@ -121,10 +125,10 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                  TRNS,TRNS,TRNS,
         // right hand
              F12, F6,  F7,  F8,  F9,  F10, TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                       TRNS,TRNS,TRNS,TRNS,TRNS,
+             TRNS,TRNS,TRNS,P7,P8,P9,PSLS,
+                  TRNS,TRNS,P4,P5,P6,PAST,
+             TRNS,TRNS,TRNS,P1,P2,P3,PMNS,
+                       TRNS,P0,P0,PDOT,PEQL,
         TRNS,TRNS,
         TRNS,
         TRNS,TRNS,TRNS
@@ -235,4 +239,3 @@ action_t keymap_fn_to_action(uint8_t keycode)
     return action;
 }
 #endif
-

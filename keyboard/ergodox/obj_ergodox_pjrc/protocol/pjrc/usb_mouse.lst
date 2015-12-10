@@ -1,0 +1,516 @@
+   1               		.file	"usb_mouse.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.usb_mouse_send,"ax",@progbits
+  11               	.global	usb_mouse_send
+  13               	usb_mouse_send:
+  14               	.LFB7:
+  15               		.file 1 "../../protocol/pjrc/usb_mouse.c"
+   1:../../protocol/pjrc/usb_mouse.c **** /* USB Mouse Plus Debug Channel Example for Teensy USB Development Board
+   2:../../protocol/pjrc/usb_mouse.c ****  * http://www.pjrc.com/teensy/usb_mouse.html
+   3:../../protocol/pjrc/usb_mouse.c ****  * Copyright (c) 2009 PJRC.COM, LLC
+   4:../../protocol/pjrc/usb_mouse.c ****  *
+   5:../../protocol/pjrc/usb_mouse.c ****  * Permission is hereby granted, free of charge, to any person obtaining a copy
+   6:../../protocol/pjrc/usb_mouse.c ****  * of this software and associated documentation files (the "Software"), to deal
+   7:../../protocol/pjrc/usb_mouse.c ****  * in the Software without restriction, including without limitation the rights
+   8:../../protocol/pjrc/usb_mouse.c ****  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   9:../../protocol/pjrc/usb_mouse.c ****  * copies of the Software, and to permit persons to whom the Software is
+  10:../../protocol/pjrc/usb_mouse.c ****  * furnished to do so, subject to the following conditions:
+  11:../../protocol/pjrc/usb_mouse.c ****  *
+  12:../../protocol/pjrc/usb_mouse.c ****  * The above copyright notice and this permission notice shall be included in
+  13:../../protocol/pjrc/usb_mouse.c ****  * all copies or substantial portions of the Software.
+  14:../../protocol/pjrc/usb_mouse.c ****  *
+  15:../../protocol/pjrc/usb_mouse.c ****  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  16:../../protocol/pjrc/usb_mouse.c ****  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  17:../../protocol/pjrc/usb_mouse.c ****  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  18:../../protocol/pjrc/usb_mouse.c ****  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  19:../../protocol/pjrc/usb_mouse.c ****  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  20:../../protocol/pjrc/usb_mouse.c ****  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  21:../../protocol/pjrc/usb_mouse.c ****  * THE SOFTWARE.
+  22:../../protocol/pjrc/usb_mouse.c ****  */
+  23:../../protocol/pjrc/usb_mouse.c **** 
+  24:../../protocol/pjrc/usb_mouse.c **** #include <avr/interrupt.h>
+  25:../../protocol/pjrc/usb_mouse.c **** #include <util/delay.h>
+  26:../../protocol/pjrc/usb_mouse.c **** #include "usb_mouse.h"
+  27:../../protocol/pjrc/usb_mouse.c **** #include "print.h"
+  28:../../protocol/pjrc/usb_mouse.c **** #include "debug.h"
+  29:../../protocol/pjrc/usb_mouse.c **** 
+  30:../../protocol/pjrc/usb_mouse.c **** 
+  31:../../protocol/pjrc/usb_mouse.c **** uint8_t usb_mouse_protocol=1;
+  32:../../protocol/pjrc/usb_mouse.c **** 
+  33:../../protocol/pjrc/usb_mouse.c **** 
+  34:../../protocol/pjrc/usb_mouse.c **** int8_t usb_mouse_send(int8_t x, int8_t y, int8_t wheel_v, int8_t wheel_h, uint8_t buttons)
+  35:../../protocol/pjrc/usb_mouse.c **** {
+  16               		.loc 1 35 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19 0000 EF92      		push r14
+  20               	.LCFI0:
+  21               		.cfi_def_cfa_offset 3
+  22               		.cfi_offset 14, -2
+  23 0002 FF92      		push r15
+  24               	.LCFI1:
+  25               		.cfi_def_cfa_offset 4
+  26               		.cfi_offset 15, -3
+  27 0004 0F93      		push r16
+  28               	.LCFI2:
+  29               		.cfi_def_cfa_offset 5
+  30               		.cfi_offset 16, -4
+  31 0006 1F93      		push r17
+  32               	.LCFI3:
+  33               		.cfi_def_cfa_offset 6
+  34               		.cfi_offset 17, -5
+  35 0008 CF93      		push r28
+  36               	.LCFI4:
+  37               		.cfi_def_cfa_offset 7
+  38               		.cfi_offset 28, -6
+  39 000a DF93      		push r29
+  40               	.LCFI5:
+  41               		.cfi_def_cfa_offset 8
+  42               		.cfi_offset 29, -7
+  43 000c 00D0      		rcall .
+  44 000e 1F92      		push __zero_reg__
+  45               	.LCFI6:
+  46               		.cfi_def_cfa_offset 11
+  47 0010 CDB7      		in r28,__SP_L__
+  48 0012 DEB7      		in r29,__SP_H__
+  49               	.LCFI7:
+  50               		.cfi_def_cfa_register 28
+  51               	/* prologue: function */
+  52               	/* frame size = 3 */
+  53               	/* stack size = 9 */
+  54               	.L__stack_usage = 9
+  55 0014 E82E      		mov r14,r24
+  56 0016 142F      		mov r17,r20
+  36:../../protocol/pjrc/usb_mouse.c **** 	uint8_t intr_state, timeout;
+  37:../../protocol/pjrc/usb_mouse.c **** 
+  38:../../protocol/pjrc/usb_mouse.c **** 	if (!usb_configured()) return -1;
+  57               		.loc 1 38 0
+  58 0018 2B83      		std Y+3,r18
+  59 001a 6A83      		std Y+2,r22
+  60 001c 0E94 0000 		call usb_configured
+  61               	.LVL1:
+  62 0020 2B81      		ldd r18,Y+3
+  63 0022 6A81      		ldd r22,Y+2
+  64 0024 8111      		cpse r24,__zero_reg__
+  65 0026 00C0      		rjmp .L2
+  66               	.LVL2:
+  67               	.L9:
+  68 0028 8FEF      		ldi r24,lo8(-1)
+  69 002a 00C0      		rjmp .L3
+  70               	.LVL3:
+  71               	.L2:
+  39:../../protocol/pjrc/usb_mouse.c **** 	if (x == -128) x = -127;
+  72               		.loc 1 39 0
+  73 002c 80E8      		ldi r24,lo8(-128)
+  74 002e E812      		cpse r14,r24
+  75 0030 00C0      		rjmp .L4
+  76 0032 41E8      		ldi r20,lo8(-127)
+  77 0034 E42E      		mov r14,r20
+  78               	.LVL4:
+  79               	.L4:
+  40:../../protocol/pjrc/usb_mouse.c **** 	if (y == -128) y = -127;
+  80               		.loc 1 40 0
+  81 0036 6038      		cpi r22,lo8(-128)
+  82 0038 01F4      		brne .L5
+  83 003a 61E8      		ldi r22,lo8(-127)
+  84               	.L5:
+  85               	.LVL5:
+  41:../../protocol/pjrc/usb_mouse.c **** 	if (wheel_v == -128) wheel_v = -127;
+  86               		.loc 1 41 0
+  87 003c 1038      		cpi r17,lo8(-128)
+  88 003e 01F4      		brne .L6
+  89 0040 11E8      		ldi r17,lo8(-127)
+  90               	.LVL6:
+  91               	.L6:
+  42:../../protocol/pjrc/usb_mouse.c **** 	if (wheel_h == -128) wheel_h = -127;
+  92               		.loc 1 42 0
+  93 0042 2038      		cpi r18,lo8(-128)
+  94 0044 01F4      		brne .L7
+  95 0046 21E8      		ldi r18,lo8(-127)
+  96               	.L7:
+  97               	.LVL7:
+  43:../../protocol/pjrc/usb_mouse.c **** 	intr_state = SREG;
+  98               		.loc 1 43 0
+  99 0048 8FB7      		in r24,__SREG__
+ 100               	.LVL8:
+  44:../../protocol/pjrc/usb_mouse.c **** 	cli();
+ 101               		.loc 1 44 0
+ 102               	/* #APP */
+ 103               	 ;  44 "../../protocol/pjrc/usb_mouse.c" 1
+ 104 004a F894      		cli
+ 105               	 ;  0 "" 2
+  45:../../protocol/pjrc/usb_mouse.c **** 	UENUM = MOUSE_ENDPOINT;
+ 106               		.loc 1 45 0
+ 107               	/* #NOAPP */
+ 108 004c 92E0      		ldi r25,lo8(2)
+ 109 004e 9093 E900 		sts 233,r25
+  46:../../protocol/pjrc/usb_mouse.c **** 	timeout = UDFNUML + 50;
+ 110               		.loc 1 46 0
+ 111 0052 9091 E400 		lds r25,228
+ 112 0056 9E5C      		subi r25,lo8(-(50))
+ 113               	.LVL9:
+  47:../../protocol/pjrc/usb_mouse.c **** 	while (1) {
+  48:../../protocol/pjrc/usb_mouse.c **** 		// are we ready to transmit?
+  49:../../protocol/pjrc/usb_mouse.c **** 		if (UEINTX & (1<<RWAL)) break;
+  50:../../protocol/pjrc/usb_mouse.c **** 		SREG = intr_state;
+  51:../../protocol/pjrc/usb_mouse.c **** 		// has the USB gone offline?
+  52:../../protocol/pjrc/usb_mouse.c **** 		if (!usb_configured()) return -1;
+  53:../../protocol/pjrc/usb_mouse.c **** 		// have we waited too long?
+  54:../../protocol/pjrc/usb_mouse.c **** 		if (UDFNUML == timeout) return -1;
+  55:../../protocol/pjrc/usb_mouse.c **** 		// get ready to try checking again
+  56:../../protocol/pjrc/usb_mouse.c **** 		intr_state = SREG;
+  57:../../protocol/pjrc/usb_mouse.c **** 		cli();
+  58:../../protocol/pjrc/usb_mouse.c **** 		UENUM = MOUSE_ENDPOINT;
+ 114               		.loc 1 58 0
+ 115 0058 32E0      		ldi r19,lo8(2)
+ 116 005a F32E      		mov r15,r19
+ 117               	.LVL10:
+ 118               	.L10:
+  49:../../protocol/pjrc/usb_mouse.c **** 		SREG = intr_state;
+ 119               		.loc 1 49 0
+ 120 005c 3091 E800 		lds r19,232
+ 121 0060 35FD      		sbrc r19,5
+ 122 0062 00C0      		rjmp .L8
+  50:../../protocol/pjrc/usb_mouse.c **** 		// has the USB gone offline?
+ 123               		.loc 1 50 0
+ 124 0064 8FBF      		out __SREG__,r24
+  52:../../protocol/pjrc/usb_mouse.c **** 		// have we waited too long?
+ 125               		.loc 1 52 0
+ 126 0066 2B83      		std Y+3,r18
+ 127 0068 6A83      		std Y+2,r22
+ 128 006a 9983      		std Y+1,r25
+ 129 006c 0E94 0000 		call usb_configured
+ 130               	.LVL11:
+ 131 0070 2B81      		ldd r18,Y+3
+ 132 0072 6A81      		ldd r22,Y+2
+ 133 0074 9981      		ldd r25,Y+1
+ 134 0076 8823      		tst r24
+ 135 0078 01F0      		breq .L9
+  54:../../protocol/pjrc/usb_mouse.c **** 		// get ready to try checking again
+ 136               		.loc 1 54 0
+ 137 007a 8091 E400 		lds r24,228
+ 138 007e 8917      		cp r24,r25
+ 139 0080 01F0      		breq .L9
+  56:../../protocol/pjrc/usb_mouse.c **** 		cli();
+ 140               		.loc 1 56 0
+ 141 0082 8FB7      		in r24,__SREG__
+ 142               	.LVL12:
+  57:../../protocol/pjrc/usb_mouse.c **** 		UENUM = MOUSE_ENDPOINT;
+ 143               		.loc 1 57 0
+ 144               	/* #APP */
+ 145               	 ;  57 "../../protocol/pjrc/usb_mouse.c" 1
+ 146 0084 F894      		cli
+ 147               	 ;  0 "" 2
+ 148               		.loc 1 58 0
+ 149               	/* #NOAPP */
+ 150 0086 F092 E900 		sts 233,r15
+  59:../../protocol/pjrc/usb_mouse.c **** 	}
+ 151               		.loc 1 59 0
+ 152 008a 00C0      		rjmp .L10
+ 153               	.L8:
+  60:../../protocol/pjrc/usb_mouse.c **** 	UEDATX = buttons;
+ 154               		.loc 1 60 0
+ 155 008c 0093 F100 		sts 241,r16
+  61:../../protocol/pjrc/usb_mouse.c **** 	UEDATX = x;
+ 156               		.loc 1 61 0
+ 157 0090 E092 F100 		sts 241,r14
+  62:../../protocol/pjrc/usb_mouse.c **** 	UEDATX = y;
+ 158               		.loc 1 62 0
+ 159 0094 6093 F100 		sts 241,r22
+  63:../../protocol/pjrc/usb_mouse.c ****         if (usb_mouse_protocol) {
+ 160               		.loc 1 63 0
+ 161 0098 9091 0000 		lds r25,usb_mouse_protocol
+ 162 009c 9923      		tst r25
+ 163 009e 01F0      		breq .L11
+  64:../../protocol/pjrc/usb_mouse.c ****             UEDATX = wheel_v;
+ 164               		.loc 1 64 0
+ 165 00a0 1093 F100 		sts 241,r17
+  65:../../protocol/pjrc/usb_mouse.c ****             UEDATX = wheel_h;
+ 166               		.loc 1 65 0
+ 167 00a4 2093 F100 		sts 241,r18
+ 168               	.L11:
+  66:../../protocol/pjrc/usb_mouse.c ****         }
+  67:../../protocol/pjrc/usb_mouse.c ****         
+  68:../../protocol/pjrc/usb_mouse.c **** 	UEINTX = 0x3A;
+ 169               		.loc 1 68 0
+ 170 00a8 9AE3      		ldi r25,lo8(58)
+ 171 00aa 9093 E800 		sts 232,r25
+  69:../../protocol/pjrc/usb_mouse.c **** 	SREG = intr_state;
+ 172               		.loc 1 69 0
+ 173 00ae 8FBF      		out __SREG__,r24
+  70:../../protocol/pjrc/usb_mouse.c **** 	return 0;
+ 174               		.loc 1 70 0
+ 175 00b0 80E0      		ldi r24,0
+ 176               	.LVL13:
+ 177               	.L3:
+ 178               	/* epilogue start */
+  71:../../protocol/pjrc/usb_mouse.c **** }
+ 179               		.loc 1 71 0
+ 180 00b2 0F90      		pop __tmp_reg__
+ 181 00b4 0F90      		pop __tmp_reg__
+ 182 00b6 0F90      		pop __tmp_reg__
+ 183 00b8 DF91      		pop r29
+ 184 00ba CF91      		pop r28
+ 185 00bc 1F91      		pop r17
+ 186               	.LVL14:
+ 187 00be 0F91      		pop r16
+ 188               	.LVL15:
+ 189 00c0 FF90      		pop r15
+ 190 00c2 EF90      		pop r14
+ 191               	.LVL16:
+ 192 00c4 0895      		ret
+ 193               		.cfi_endproc
+ 194               	.LFE7:
+ 196               		.section	.text.usb_mouse_print,"ax",@progbits
+ 197               	.global	usb_mouse_print
+ 199               	usb_mouse_print:
+ 200               	.LFB8:
+  72:../../protocol/pjrc/usb_mouse.c **** 
+  73:../../protocol/pjrc/usb_mouse.c **** void usb_mouse_print(int8_t x, int8_t y, int8_t wheel_v, int8_t wheel_h, uint8_t buttons) {
+ 201               		.loc 1 73 0
+ 202               		.cfi_startproc
+ 203               	.LVL17:
+ 204 0000 0F93      		push r16
+ 205               	.LCFI8:
+ 206               		.cfi_def_cfa_offset 3
+ 207               		.cfi_offset 16, -2
+ 208 0002 1F93      		push r17
+ 209               	.LCFI9:
+ 210               		.cfi_def_cfa_offset 4
+ 211               		.cfi_offset 17, -3
+ 212 0004 CF93      		push r28
+ 213               	.LCFI10:
+ 214               		.cfi_def_cfa_offset 5
+ 215               		.cfi_offset 28, -4
+ 216 0006 DF93      		push r29
+ 217               	.LCFI11:
+ 218               		.cfi_def_cfa_offset 6
+ 219               		.cfi_offset 29, -5
+ 220 0008 00D0      		rcall .
+ 221 000a 1F92      		push __zero_reg__
+ 222               	.LCFI12:
+ 223               		.cfi_def_cfa_offset 9
+ 224 000c CDB7      		in r28,__SP_L__
+ 225 000e DEB7      		in r29,__SP_H__
+ 226               	.LCFI13:
+ 227               		.cfi_def_cfa_register 28
+ 228               	/* prologue: function */
+ 229               	/* frame size = 3 */
+ 230               	/* stack size = 7 */
+ 231               	.L__stack_usage = 7
+ 232 0010 182F      		mov r17,r24
+  74:../../protocol/pjrc/usb_mouse.c ****     if (!debug_mouse) return;
+ 233               		.loc 1 74 0
+ 234 0012 8091 0000 		lds r24,debug_config
+ 235               	.LVL18:
+ 236 0016 83FF      		sbrs r24,3
+ 237 0018 00C0      		rjmp .L23
+  75:../../protocol/pjrc/usb_mouse.c ****     print("usb_mouse[btn|x y v h]: ");
+ 238               		.loc 1 75 0
+ 239 001a 80E0      		ldi r24,lo8(__c.1874)
+ 240 001c 90E0      		ldi r25,hi8(__c.1874)
+ 241 001e 2B83      		std Y+3,r18
+ 242 0020 4A83      		std Y+2,r20
+ 243 0022 6983      		std Y+1,r22
+ 244 0024 0E94 0000 		call xputs
+ 245               	.LVL19:
+  76:../../protocol/pjrc/usb_mouse.c ****     phex(buttons); print("|");
+ 246               		.loc 1 76 0
+ 247 0028 1F92      		push __zero_reg__
+ 248 002a 0F93      		push r16
+ 249 002c E0E0      		ldi r30,lo8(__c.1876)
+ 250 002e F0E0      		ldi r31,hi8(__c.1876)
+ 251 0030 FF93      		push r31
+ 252 0032 EF93      		push r30
+ 253 0034 0E94 0000 		call __xprintf
+ 254               	.LVL20:
+ 255 0038 80E0      		ldi r24,lo8(__c.1878)
+ 256 003a 90E0      		ldi r25,hi8(__c.1878)
+ 257 003c 0E94 0000 		call xputs
+ 258               	.LVL21:
+  77:../../protocol/pjrc/usb_mouse.c ****     phex(x); print(" ");
+ 259               		.loc 1 77 0
+ 260 0040 E12F      		mov r30,r17
+ 261 0042 FF27      		clr r31
+ 262 0044 E7FD      		sbrc r30,7
+ 263 0046 F095      		com r31
+ 264 0048 FF93      		push r31
+ 265 004a 1F93      		push r17
+ 266 004c 80E0      		ldi r24,lo8(__c.1880)
+ 267 004e 90E0      		ldi r25,hi8(__c.1880)
+ 268 0050 9F93      		push r25
+ 269 0052 8F93      		push r24
+ 270 0054 0E94 0000 		call __xprintf
+ 271               	.LVL22:
+ 272 0058 80E0      		ldi r24,lo8(__c.1882)
+ 273 005a 90E0      		ldi r25,hi8(__c.1882)
+ 274 005c 0E94 0000 		call xputs
+ 275               	.LVL23:
+  78:../../protocol/pjrc/usb_mouse.c ****     phex(y); print(" ");
+ 276               		.loc 1 78 0
+ 277 0060 6981      		ldd r22,Y+1
+ 278 0062 862F      		mov r24,r22
+ 279 0064 9927      		clr r25
+ 280 0066 87FD      		sbrc r24,7
+ 281 0068 9095      		com r25
+ 282 006a 9F93      		push r25
+ 283 006c 6F93      		push r22
+ 284 006e 80E0      		ldi r24,lo8(__c.1884)
+ 285 0070 90E0      		ldi r25,hi8(__c.1884)
+ 286 0072 9F93      		push r25
+ 287 0074 8F93      		push r24
+ 288 0076 0E94 0000 		call __xprintf
+ 289               	.LVL24:
+ 290 007a 80E0      		ldi r24,lo8(__c.1886)
+ 291 007c 90E0      		ldi r25,hi8(__c.1886)
+ 292 007e 0E94 0000 		call xputs
+ 293               	.LVL25:
+  79:../../protocol/pjrc/usb_mouse.c ****     phex(wheel_v); print(" ");
+ 294               		.loc 1 79 0
+ 295 0082 4A81      		ldd r20,Y+2
+ 296 0084 842F      		mov r24,r20
+ 297 0086 9927      		clr r25
+ 298 0088 87FD      		sbrc r24,7
+ 299 008a 9095      		com r25
+ 300 008c 9F93      		push r25
+ 301 008e 4F93      		push r20
+ 302 0090 80E0      		ldi r24,lo8(__c.1888)
+ 303 0092 90E0      		ldi r25,hi8(__c.1888)
+ 304 0094 9F93      		push r25
+ 305 0096 8F93      		push r24
+ 306 0098 0E94 0000 		call __xprintf
+ 307               	.LVL26:
+ 308 009c 80E0      		ldi r24,lo8(__c.1890)
+ 309 009e 90E0      		ldi r25,hi8(__c.1890)
+ 310 00a0 0E94 0000 		call xputs
+ 311               	.LVL27:
+  80:../../protocol/pjrc/usb_mouse.c ****     phex(wheel_h); print("\n");
+ 312               		.loc 1 80 0
+ 313 00a4 2B81      		ldd r18,Y+3
+ 314 00a6 822F      		mov r24,r18
+ 315 00a8 9927      		clr r25
+ 316 00aa 87FD      		sbrc r24,7
+ 317 00ac 9095      		com r25
+ 318 00ae 9F93      		push r25
+ 319 00b0 2F93      		push r18
+ 320 00b2 80E0      		ldi r24,lo8(__c.1892)
+ 321 00b4 90E0      		ldi r25,hi8(__c.1892)
+ 322 00b6 9F93      		push r25
+ 323 00b8 8F93      		push r24
+ 324 00ba 0E94 0000 		call __xprintf
+ 325               	.LVL28:
+ 326 00be 0FB6      		in __tmp_reg__,__SREG__
+ 327 00c0 F894      		cli
+ 328 00c2 DEBF      		out __SP_H__,r29
+ 329 00c4 0FBE      		out __SREG__,__tmp_reg__
+ 330 00c6 CDBF      		out __SP_L__,r28
+ 331 00c8 80E0      		ldi r24,lo8(__c.1894)
+ 332 00ca 90E0      		ldi r25,hi8(__c.1894)
+ 333               	/* epilogue start */
+  81:../../protocol/pjrc/usb_mouse.c **** }
+ 334               		.loc 1 81 0
+ 335 00cc 0F90      		pop __tmp_reg__
+ 336 00ce 0F90      		pop __tmp_reg__
+ 337 00d0 0F90      		pop __tmp_reg__
+ 338 00d2 DF91      		pop r29
+ 339 00d4 CF91      		pop r28
+ 340 00d6 1F91      		pop r17
+ 341               	.LVL29:
+ 342 00d8 0F91      		pop r16
+ 343               	.LVL30:
+  80:../../protocol/pjrc/usb_mouse.c ****     phex(wheel_h); print("\n");
+ 344               		.loc 1 80 0
+ 345 00da 0C94 0000 		jmp xputs
+ 346               	.LVL31:
+ 347               	.L23:
+ 348               	/* epilogue start */
+ 349               		.loc 1 81 0
+ 350 00de 0F90      		pop __tmp_reg__
+ 351 00e0 0F90      		pop __tmp_reg__
+ 352 00e2 0F90      		pop __tmp_reg__
+ 353 00e4 DF91      		pop r29
+ 354 00e6 CF91      		pop r28
+ 355 00e8 1F91      		pop r17
+ 356               	.LVL32:
+ 357 00ea 0F91      		pop r16
+ 358               	.LVL33:
+ 359 00ec 0895      		ret
+ 360               		.cfi_endproc
+ 361               	.LFE8:
+ 363               		.section	.progmem.data,"a",@progbits
+ 366               	__c.1894:
+ 367 0000 0A00      		.string	"\n"
+ 370               	__c.1892:
+ 371 0002 2530 3258 		.string	"%02X"
+ 371      00
+ 374               	__c.1890:
+ 375 0007 2000      		.string	" "
+ 378               	__c.1888:
+ 379 0009 2530 3258 		.string	"%02X"
+ 379      00
+ 382               	__c.1886:
+ 383 000e 2000      		.string	" "
+ 386               	__c.1884:
+ 387 0010 2530 3258 		.string	"%02X"
+ 387      00
+ 390               	__c.1882:
+ 391 0015 2000      		.string	" "
+ 394               	__c.1880:
+ 395 0017 2530 3258 		.string	"%02X"
+ 395      00
+ 398               	__c.1878:
+ 399 001c 7C00      		.string	"|"
+ 402               	__c.1876:
+ 403 001e 2530 3258 		.string	"%02X"
+ 403      00
+ 406               	__c.1874:
+ 407 0023 7573 625F 		.string	"usb_mouse[btn|x y v h]: "
+ 407      6D6F 7573 
+ 407      655B 6274 
+ 407      6E7C 7820 
+ 407      7920 7620 
+ 408               	.global	usb_mouse_protocol
+ 409               		.data
+ 412               	usb_mouse_protocol:
+ 413 0000 01        		.byte	1
+ 414               		.text
+ 415               	.Letext0:
+ 416               		.file 2 "/usr/lib/avr/include/stdint.h"
+ 417               		.file 3 "../../common/debug.h"
+ 418               		.file 4 "../../protocol/pjrc/usb.h"
+ 419               		.file 5 "../../common/avr/xprintf.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 usb_mouse.c
+     /tmp/ccQULMJc.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccQULMJc.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccQULMJc.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccQULMJc.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccQULMJc.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccQULMJc.s:13     .text.usb_mouse_send:0000000000000000 usb_mouse_send
+     /tmp/ccQULMJc.s:412    .data:0000000000000000 usb_mouse_protocol
+     /tmp/ccQULMJc.s:199    .text.usb_mouse_print:0000000000000000 usb_mouse_print
+     /tmp/ccQULMJc.s:406    .progmem.data:0000000000000023 __c.1874
+     /tmp/ccQULMJc.s:402    .progmem.data:000000000000001e __c.1876
+     /tmp/ccQULMJc.s:398    .progmem.data:000000000000001c __c.1878
+     /tmp/ccQULMJc.s:394    .progmem.data:0000000000000017 __c.1880
+     /tmp/ccQULMJc.s:390    .progmem.data:0000000000000015 __c.1882
+     /tmp/ccQULMJc.s:386    .progmem.data:0000000000000010 __c.1884
+     /tmp/ccQULMJc.s:382    .progmem.data:000000000000000e __c.1886
+     /tmp/ccQULMJc.s:378    .progmem.data:0000000000000009 __c.1888
+     /tmp/ccQULMJc.s:374    .progmem.data:0000000000000007 __c.1890
+     /tmp/ccQULMJc.s:370    .progmem.data:0000000000000002 __c.1892
+     /tmp/ccQULMJc.s:366    .progmem.data:0000000000000000 __c.1894
+
+UNDEFINED SYMBOLS
+usb_configured
+debug_config
+xputs
+__xprintf
+__do_copy_data

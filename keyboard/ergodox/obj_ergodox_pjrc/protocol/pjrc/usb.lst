@@ -1,0 +1,3027 @@
+   1               		.file	"usb.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.usb_wait_in_ready,"ax",@progbits
+  12               	usb_wait_in_ready:
+  13               	.LFB10:
+  14               		.file 1 "../../protocol/pjrc/usb.c"
+   1:../../protocol/pjrc/usb.c **** /* USB Keyboard Plus Debug Channel Example for Teensy USB Development Board
+   2:../../protocol/pjrc/usb.c ****  * http://www.pjrc.com/teensy/usb_keyboard.html
+   3:../../protocol/pjrc/usb.c ****  * Copyright (c) 2009 PJRC.COM, LLC
+   4:../../protocol/pjrc/usb.c ****  * 
+   5:../../protocol/pjrc/usb.c ****  * Permission is hereby granted, free of charge, to any person obtaining a copy
+   6:../../protocol/pjrc/usb.c ****  * of this software and associated documentation files (the "Software"), to deal
+   7:../../protocol/pjrc/usb.c ****  * in the Software without restriction, including without limitation the rights
+   8:../../protocol/pjrc/usb.c ****  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   9:../../protocol/pjrc/usb.c ****  * copies of the Software, and to permit persons to whom the Software is
+  10:../../protocol/pjrc/usb.c ****  * furnished to do so, subject to the following conditions:
+  11:../../protocol/pjrc/usb.c ****  * 
+  12:../../protocol/pjrc/usb.c ****  * The above copyright notice and this permission notice shall be included in
+  13:../../protocol/pjrc/usb.c ****  * all copies or substantial portions of the Software.
+  14:../../protocol/pjrc/usb.c ****  * 
+  15:../../protocol/pjrc/usb.c ****  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  16:../../protocol/pjrc/usb.c ****  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  17:../../protocol/pjrc/usb.c ****  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  18:../../protocol/pjrc/usb.c ****  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  19:../../protocol/pjrc/usb.c ****  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  20:../../protocol/pjrc/usb.c ****  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  21:../../protocol/pjrc/usb.c ****  * THE SOFTWARE.
+  22:../../protocol/pjrc/usb.c ****  */
+  23:../../protocol/pjrc/usb.c **** 
+  24:../../protocol/pjrc/usb.c **** #include <stdint.h>
+  25:../../protocol/pjrc/usb.c **** #include <stdbool.h>
+  26:../../protocol/pjrc/usb.c **** #include <avr/io.h>
+  27:../../protocol/pjrc/usb.c **** #include <avr/pgmspace.h>
+  28:../../protocol/pjrc/usb.c **** #include <avr/interrupt.h>
+  29:../../protocol/pjrc/usb.c **** #include "usb.h"
+  30:../../protocol/pjrc/usb.c **** #include "usb_keyboard.h"
+  31:../../protocol/pjrc/usb.c **** #include "usb_mouse.h"
+  32:../../protocol/pjrc/usb.c **** #include "usb_debug.h"
+  33:../../protocol/pjrc/usb.c **** #include "usb_extra.h"
+  34:../../protocol/pjrc/usb.c **** #include "led.h"
+  35:../../protocol/pjrc/usb.c **** #include "print.h"
+  36:../../protocol/pjrc/usb.c **** #include "util.h"
+  37:../../protocol/pjrc/usb.c **** #ifdef SLEEP_LED_ENABLE
+  38:../../protocol/pjrc/usb.c **** #include "sleep_led.h"
+  39:../../protocol/pjrc/usb.c **** #endif
+  40:../../protocol/pjrc/usb.c **** #include "suspend.h"
+  41:../../protocol/pjrc/usb.c **** #include "action.h"
+  42:../../protocol/pjrc/usb.c **** #include "action_util.h"
+  43:../../protocol/pjrc/usb.c **** 
+  44:../../protocol/pjrc/usb.c **** 
+  45:../../protocol/pjrc/usb.c **** /**************************************************************************
+  46:../../protocol/pjrc/usb.c ****  *
+  47:../../protocol/pjrc/usb.c ****  *  Configurable Options
+  48:../../protocol/pjrc/usb.c ****  *
+  49:../../protocol/pjrc/usb.c ****  **************************************************************************/
+  50:../../protocol/pjrc/usb.c **** 
+  51:../../protocol/pjrc/usb.c **** // You can change these to give your code its own name.
+  52:../../protocol/pjrc/usb.c **** #ifndef MANUFACTURER
+  53:../../protocol/pjrc/usb.c **** #   define STR_MANUFACTURER	L"t.m.k."
+  54:../../protocol/pjrc/usb.c **** #else
+  55:../../protocol/pjrc/usb.c **** #   define STR_MANUFACTURER	LSTR(MANUFACTURER)
+  56:../../protocol/pjrc/usb.c **** #endif
+  57:../../protocol/pjrc/usb.c **** #ifndef PRODUCT
+  58:../../protocol/pjrc/usb.c **** #   define STR_PRODUCT		L"t.m.k. keyboard"
+  59:../../protocol/pjrc/usb.c **** #else
+  60:../../protocol/pjrc/usb.c **** #   define STR_PRODUCT		LSTR(PRODUCT)
+  61:../../protocol/pjrc/usb.c **** #endif
+  62:../../protocol/pjrc/usb.c **** 
+  63:../../protocol/pjrc/usb.c **** 
+  64:../../protocol/pjrc/usb.c **** // Mac OS-X and Linux automatically load the correct drivers.  On
+  65:../../protocol/pjrc/usb.c **** // Windows, even though the driver is supplied by Microsoft, an
+  66:../../protocol/pjrc/usb.c **** // INF file is needed to load the driver.  These numbers need to
+  67:../../protocol/pjrc/usb.c **** // match the INF file.
+  68:../../protocol/pjrc/usb.c **** #ifndef VENDOR_ID
+  69:../../protocol/pjrc/usb.c **** #   define VENDOR_ID		0xFEED
+  70:../../protocol/pjrc/usb.c **** #endif
+  71:../../protocol/pjrc/usb.c **** 
+  72:../../protocol/pjrc/usb.c **** #ifndef PRODUCT_ID
+  73:../../protocol/pjrc/usb.c **** #   define PRODUCT_ID		0xBABE
+  74:../../protocol/pjrc/usb.c **** #endif
+  75:../../protocol/pjrc/usb.c **** 
+  76:../../protocol/pjrc/usb.c **** #ifndef DEVICE_VER
+  77:../../protocol/pjrc/usb.c **** #   define DEVICE_VER		0x0100
+  78:../../protocol/pjrc/usb.c **** #endif
+  79:../../protocol/pjrc/usb.c **** 
+  80:../../protocol/pjrc/usb.c **** 
+  81:../../protocol/pjrc/usb.c **** // USB devices are supposed to implment a halt feature, which is
+  82:../../protocol/pjrc/usb.c **** // rarely (if ever) used.  If you comment this line out, the halt
+  83:../../protocol/pjrc/usb.c **** // code will be removed, saving 102 bytes of space (gcc 4.3.0).
+  84:../../protocol/pjrc/usb.c **** // This is not strictly USB compliant, but works with all major
+  85:../../protocol/pjrc/usb.c **** // operating systems.
+  86:../../protocol/pjrc/usb.c **** #define SUPPORT_ENDPOINT_HALT
+  87:../../protocol/pjrc/usb.c **** 
+  88:../../protocol/pjrc/usb.c **** 
+  89:../../protocol/pjrc/usb.c **** 
+  90:../../protocol/pjrc/usb.c **** /**************************************************************************
+  91:../../protocol/pjrc/usb.c ****  *
+  92:../../protocol/pjrc/usb.c ****  *  Endpoint Buffer Configuration
+  93:../../protocol/pjrc/usb.c ****  *
+  94:../../protocol/pjrc/usb.c ****  **************************************************************************/
+  95:../../protocol/pjrc/usb.c **** 
+  96:../../protocol/pjrc/usb.c **** #define ENDPOINT0_SIZE		32
+  97:../../protocol/pjrc/usb.c **** 
+  98:../../protocol/pjrc/usb.c **** bool remote_wakeup = false;
+  99:../../protocol/pjrc/usb.c **** bool suspend = false;
+ 100:../../protocol/pjrc/usb.c **** 
+ 101:../../protocol/pjrc/usb.c **** // 0:control endpoint is enabled automatically by controller.
+ 102:../../protocol/pjrc/usb.c **** static const uint8_t PROGMEM endpoint_config_table[] = {
+ 103:../../protocol/pjrc/usb.c **** 	// enable, UECFG0X(type, direction), UECFG1X(size, bank, allocation)
+ 104:../../protocol/pjrc/usb.c **** 	1, EP_TYPE_INTERRUPT_IN,  EP_SIZE(KBD_SIZE)      | KBD_BUFFER,      // 1
+ 105:../../protocol/pjrc/usb.c **** #ifdef MOUSE_ENABLE
+ 106:../../protocol/pjrc/usb.c **** 	1, EP_TYPE_INTERRUPT_IN,  EP_SIZE(MOUSE_SIZE)    | MOUSE_BUFFER,    // 2
+ 107:../../protocol/pjrc/usb.c **** #else
+ 108:../../protocol/pjrc/usb.c ****         0,                                                                  // 2
+ 109:../../protocol/pjrc/usb.c **** #endif
+ 110:../../protocol/pjrc/usb.c **** #ifdef CONSOLE_ENABLE
+ 111:../../protocol/pjrc/usb.c **** 	1, EP_TYPE_INTERRUPT_IN,  EP_SIZE(DEBUG_TX_SIZE) | DEBUG_TX_BUFFER, // 3
+ 112:../../protocol/pjrc/usb.c **** #else
+ 113:../../protocol/pjrc/usb.c ****         0,
+ 114:../../protocol/pjrc/usb.c **** #endif
+ 115:../../protocol/pjrc/usb.c **** #ifdef EXTRAKEY_ENABLE
+ 116:../../protocol/pjrc/usb.c **** 	1, EP_TYPE_INTERRUPT_IN,  EP_SIZE(EXTRA_SIZE)    | EXTRA_BUFFER,    // 4
+ 117:../../protocol/pjrc/usb.c **** #else
+ 118:../../protocol/pjrc/usb.c ****         0,                                                                  // 4
+ 119:../../protocol/pjrc/usb.c **** #endif
+ 120:../../protocol/pjrc/usb.c **** #ifdef NKRO_ENABLE
+ 121:../../protocol/pjrc/usb.c **** 	1, EP_TYPE_INTERRUPT_IN,  EP_SIZE(KBD2_SIZE)     | KBD2_BUFFER,     // 5
+ 122:../../protocol/pjrc/usb.c **** #else
+ 123:../../protocol/pjrc/usb.c ****         0,                                                                  // 5
+ 124:../../protocol/pjrc/usb.c **** #endif
+ 125:../../protocol/pjrc/usb.c ****         0,                                                                  // 6
+ 126:../../protocol/pjrc/usb.c **** };
+ 127:../../protocol/pjrc/usb.c **** 
+ 128:../../protocol/pjrc/usb.c **** 
+ 129:../../protocol/pjrc/usb.c **** /**************************************************************************
+ 130:../../protocol/pjrc/usb.c ****  *
+ 131:../../protocol/pjrc/usb.c ****  *  Descriptor Data
+ 132:../../protocol/pjrc/usb.c ****  *
+ 133:../../protocol/pjrc/usb.c ****  **************************************************************************/
+ 134:../../protocol/pjrc/usb.c **** 
+ 135:../../protocol/pjrc/usb.c **** // Descriptors are the data that your computer reads when it auto-detects
+ 136:../../protocol/pjrc/usb.c **** // this USB device (called "enumeration" in USB lingo).  The most commonly
+ 137:../../protocol/pjrc/usb.c **** // changed items are editable at the top of this file.  Changing things
+ 138:../../protocol/pjrc/usb.c **** // in here should only be done by those who've read chapter 9 of the USB
+ 139:../../protocol/pjrc/usb.c **** // spec and relevant portions of any USB class specifications!
+ 140:../../protocol/pjrc/usb.c **** 
+ 141:../../protocol/pjrc/usb.c **** 
+ 142:../../protocol/pjrc/usb.c **** static const uint8_t PROGMEM device_descriptor[] = {
+ 143:../../protocol/pjrc/usb.c **** 	18,					// bLength
+ 144:../../protocol/pjrc/usb.c **** 	1,					// bDescriptorType
+ 145:../../protocol/pjrc/usb.c **** 	0x00, 0x02,				// bcdUSB
+ 146:../../protocol/pjrc/usb.c **** 	0,					// bDeviceClass
+ 147:../../protocol/pjrc/usb.c **** 	0,					// bDeviceSubClass
+ 148:../../protocol/pjrc/usb.c **** 	0,					// bDeviceProtocol
+ 149:../../protocol/pjrc/usb.c **** 	ENDPOINT0_SIZE,				// bMaxPacketSize0
+ 150:../../protocol/pjrc/usb.c **** 	LSB(VENDOR_ID), MSB(VENDOR_ID),		// idVendor
+ 151:../../protocol/pjrc/usb.c **** 	LSB(PRODUCT_ID), MSB(PRODUCT_ID),	// idProduct
+ 152:../../protocol/pjrc/usb.c **** 	LSB(DEVICE_VER), MSB(DEVICE_VER),	// bcdDevice
+ 153:../../protocol/pjrc/usb.c **** 	1,					// iManufacturer
+ 154:../../protocol/pjrc/usb.c **** 	2,					// iProduct
+ 155:../../protocol/pjrc/usb.c **** 	0,					// iSerialNumber
+ 156:../../protocol/pjrc/usb.c **** 	1					// bNumConfigurations
+ 157:../../protocol/pjrc/usb.c **** };
+ 158:../../protocol/pjrc/usb.c **** 
+ 159:../../protocol/pjrc/usb.c **** // Keyboard Protocol 1, HID 1.11 spec, Appendix B, page 59-60
+ 160:../../protocol/pjrc/usb.c **** static const uint8_t PROGMEM keyboard_hid_report_desc[] = {
+ 161:../../protocol/pjrc/usb.c ****         0x05, 0x01,          // Usage Page (Generic Desktop),
+ 162:../../protocol/pjrc/usb.c ****         0x09, 0x06,          // Usage (Keyboard),
+ 163:../../protocol/pjrc/usb.c ****         0xA1, 0x01,          // Collection (Application),
+ 164:../../protocol/pjrc/usb.c ****         0x75, 0x01,          //   Report Size (1),
+ 165:../../protocol/pjrc/usb.c ****         0x95, 0x08,          //   Report Count (8),
+ 166:../../protocol/pjrc/usb.c ****         0x05, 0x07,          //   Usage Page (Key Codes),
+ 167:../../protocol/pjrc/usb.c ****         0x19, 0xE0,          //   Usage Minimum (224),
+ 168:../../protocol/pjrc/usb.c ****         0x29, 0xE7,          //   Usage Maximum (231),
+ 169:../../protocol/pjrc/usb.c ****         0x15, 0x00,          //   Logical Minimum (0),
+ 170:../../protocol/pjrc/usb.c ****         0x25, 0x01,          //   Logical Maximum (1),
+ 171:../../protocol/pjrc/usb.c ****         0x81, 0x02,          //   Input (Data, Variable, Absolute), ;Modifier byte
+ 172:../../protocol/pjrc/usb.c ****         0x95, 0x01,          //   Report Count (1),
+ 173:../../protocol/pjrc/usb.c ****         0x75, 0x08,          //   Report Size (8),
+ 174:../../protocol/pjrc/usb.c ****         0x81, 0x03,          //   Input (Constant),                 ;Reserved byte
+ 175:../../protocol/pjrc/usb.c ****         0x95, 0x05,          //   Report Count (5),
+ 176:../../protocol/pjrc/usb.c ****         0x75, 0x01,          //   Report Size (1),
+ 177:../../protocol/pjrc/usb.c ****         0x05, 0x08,          //   Usage Page (LEDs),
+ 178:../../protocol/pjrc/usb.c ****         0x19, 0x01,          //   Usage Minimum (1),
+ 179:../../protocol/pjrc/usb.c ****         0x29, 0x05,          //   Usage Maximum (5),
+ 180:../../protocol/pjrc/usb.c ****         0x91, 0x02,          //   Output (Data, Variable, Absolute), ;LED report
+ 181:../../protocol/pjrc/usb.c ****         0x95, 0x01,          //   Report Count (1),
+ 182:../../protocol/pjrc/usb.c ****         0x75, 0x03,          //   Report Size (3),
+ 183:../../protocol/pjrc/usb.c ****         0x91, 0x03,          //   Output (Constant),                 ;LED report padding
+ 184:../../protocol/pjrc/usb.c ****         0x95, KBD_REPORT_KEYS,    //   Report Count (),
+ 185:../../protocol/pjrc/usb.c ****         0x75, 0x08,          //   Report Size (8),
+ 186:../../protocol/pjrc/usb.c ****         0x15, 0x00,          //   Logical Minimum (0),
+ 187:../../protocol/pjrc/usb.c ****         0x25, 0xFF,          //   Logical Maximum(255),
+ 188:../../protocol/pjrc/usb.c ****         0x05, 0x07,          //   Usage Page (Key Codes),
+ 189:../../protocol/pjrc/usb.c ****         0x19, 0x00,          //   Usage Minimum (0),
+ 190:../../protocol/pjrc/usb.c ****         0x29, 0xFF,          //   Usage Maximum (255),
+ 191:../../protocol/pjrc/usb.c ****         0x81, 0x00,          //   Input (Data, Array),
+ 192:../../protocol/pjrc/usb.c ****         0xc0                 // End Collection
+ 193:../../protocol/pjrc/usb.c **** };
+ 194:../../protocol/pjrc/usb.c **** #ifdef NKRO_ENABLE
+ 195:../../protocol/pjrc/usb.c **** static const uint8_t PROGMEM keyboard2_hid_report_desc[] = {
+ 196:../../protocol/pjrc/usb.c ****         0x05, 0x01,                     // Usage Page (Generic Desktop),
+ 197:../../protocol/pjrc/usb.c ****         0x09, 0x06,                     // Usage (Keyboard),
+ 198:../../protocol/pjrc/usb.c ****         0xA1, 0x01,                     // Collection (Application),
+ 199:../../protocol/pjrc/usb.c ****         // bitmap of modifiers
+ 200:../../protocol/pjrc/usb.c ****         0x75, 0x01,                     //   Report Size (1),
+ 201:../../protocol/pjrc/usb.c ****         0x95, 0x08,                     //   Report Count (8),
+ 202:../../protocol/pjrc/usb.c ****         0x05, 0x07,                     //   Usage Page (Key Codes),
+ 203:../../protocol/pjrc/usb.c ****         0x19, 0xE0,                     //   Usage Minimum (224),
+ 204:../../protocol/pjrc/usb.c ****         0x29, 0xE7,                     //   Usage Maximum (231),
+ 205:../../protocol/pjrc/usb.c ****         0x15, 0x00,                     //   Logical Minimum (0),
+ 206:../../protocol/pjrc/usb.c ****         0x25, 0x01,                     //   Logical Maximum (1),
+ 207:../../protocol/pjrc/usb.c ****         0x81, 0x02,                     //   Input (Data, Variable, Absolute), ;Modifier byte
+ 208:../../protocol/pjrc/usb.c ****         // LED output report
+ 209:../../protocol/pjrc/usb.c ****         0x95, 0x05,                     //   Report Count (5),
+ 210:../../protocol/pjrc/usb.c ****         0x75, 0x01,                     //   Report Size (1),
+ 211:../../protocol/pjrc/usb.c ****         0x05, 0x08,                     //   Usage Page (LEDs),
+ 212:../../protocol/pjrc/usb.c ****         0x19, 0x01,                     //   Usage Minimum (1),
+ 213:../../protocol/pjrc/usb.c ****         0x29, 0x05,                     //   Usage Maximum (5),
+ 214:../../protocol/pjrc/usb.c ****         0x91, 0x02,                     //   Output (Data, Variable, Absolute),
+ 215:../../protocol/pjrc/usb.c ****         0x95, 0x01,                     //   Report Count (1),
+ 216:../../protocol/pjrc/usb.c ****         0x75, 0x03,                     //   Report Size (3),
+ 217:../../protocol/pjrc/usb.c ****         0x91, 0x03,                     //   Output (Constant),
+ 218:../../protocol/pjrc/usb.c ****         // bitmap of keys
+ 219:../../protocol/pjrc/usb.c ****         0x95, KBD2_REPORT_KEYS*8,       //   Report Count (),
+ 220:../../protocol/pjrc/usb.c ****         0x75, 0x01,                     //   Report Size (1),
+ 221:../../protocol/pjrc/usb.c ****         0x15, 0x00,                     //   Logical Minimum (0),
+ 222:../../protocol/pjrc/usb.c ****         0x25, 0x01,                     //   Logical Maximum(1),
+ 223:../../protocol/pjrc/usb.c ****         0x05, 0x07,                     //   Usage Page (Key Codes),
+ 224:../../protocol/pjrc/usb.c ****         0x19, 0x00,                     //   Usage Minimum (0),
+ 225:../../protocol/pjrc/usb.c ****         0x29, KBD2_REPORT_KEYS*8-1,     //   Usage Maximum (),
+ 226:../../protocol/pjrc/usb.c ****         0x81, 0x02,                     //   Input (Data, Variable, Absolute),
+ 227:../../protocol/pjrc/usb.c ****         0xc0                            // End Collection
+ 228:../../protocol/pjrc/usb.c **** };
+ 229:../../protocol/pjrc/usb.c **** #endif
+ 230:../../protocol/pjrc/usb.c **** 
+ 231:../../protocol/pjrc/usb.c **** #ifdef MOUSE_ENABLE
+ 232:../../protocol/pjrc/usb.c **** // Mouse Protocol 1, HID 1.11 spec, Appendix B, page 59-60, with wheel extension
+ 233:../../protocol/pjrc/usb.c **** // http://www.microchip.com/forums/tm.aspx?high=&m=391435&mpage=1#391521
+ 234:../../protocol/pjrc/usb.c **** // http://www.keil.com/forum/15671/
+ 235:../../protocol/pjrc/usb.c **** // http://www.microsoft.com/whdc/device/input/wheel.mspx
+ 236:../../protocol/pjrc/usb.c **** static const uint8_t PROGMEM mouse_hid_report_desc[] = {
+ 237:../../protocol/pjrc/usb.c ****     /* mouse */
+ 238:../../protocol/pjrc/usb.c ****     0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
+ 239:../../protocol/pjrc/usb.c ****     0x09, 0x02,                    // USAGE (Mouse)
+ 240:../../protocol/pjrc/usb.c ****     0xa1, 0x01,                    // COLLECTION (Application)
+ 241:../../protocol/pjrc/usb.c ****     //0x85, REPORT_ID_MOUSE,         //   REPORT_ID (1)
+ 242:../../protocol/pjrc/usb.c ****     0x09, 0x01,                    //   USAGE (Pointer)
+ 243:../../protocol/pjrc/usb.c ****     0xa1, 0x00,                    //   COLLECTION (Physical)
+ 244:../../protocol/pjrc/usb.c ****                                    // ----------------------------  Buttons
+ 245:../../protocol/pjrc/usb.c ****     0x05, 0x09,                    //     USAGE_PAGE (Button)
+ 246:../../protocol/pjrc/usb.c ****     0x19, 0x01,                    //     USAGE_MINIMUM (Button 1)
+ 247:../../protocol/pjrc/usb.c ****     0x29, 0x05,                    //     USAGE_MAXIMUM (Button 5)
+ 248:../../protocol/pjrc/usb.c ****     0x15, 0x00,                    //     LOGICAL_MINIMUM (0)
+ 249:../../protocol/pjrc/usb.c ****     0x25, 0x01,                    //     LOGICAL_MAXIMUM (1)
+ 250:../../protocol/pjrc/usb.c ****     0x75, 0x01,                    //     REPORT_SIZE (1)
+ 251:../../protocol/pjrc/usb.c ****     0x95, 0x05,                    //     REPORT_COUNT (5)
+ 252:../../protocol/pjrc/usb.c ****     0x81, 0x02,                    //     INPUT (Data,Var,Abs)
+ 253:../../protocol/pjrc/usb.c ****     0x75, 0x03,                    //     REPORT_SIZE (3)
+ 254:../../protocol/pjrc/usb.c ****     0x95, 0x01,                    //     REPORT_COUNT (1)
+ 255:../../protocol/pjrc/usb.c ****     0x81, 0x03,                    //     INPUT (Cnst,Var,Abs)
+ 256:../../protocol/pjrc/usb.c ****                                    // ----------------------------  X,Y position
+ 257:../../protocol/pjrc/usb.c ****     0x05, 0x01,                    //     USAGE_PAGE (Generic Desktop)
+ 258:../../protocol/pjrc/usb.c ****     0x09, 0x30,                    //     USAGE (X)
+ 259:../../protocol/pjrc/usb.c ****     0x09, 0x31,                    //     USAGE (Y)
+ 260:../../protocol/pjrc/usb.c ****     0x15, 0x81,                    //     LOGICAL_MINIMUM (-127)
+ 261:../../protocol/pjrc/usb.c ****     0x25, 0x7f,                    //     LOGICAL_MAXIMUM (127)
+ 262:../../protocol/pjrc/usb.c ****     0x75, 0x08,                    //     REPORT_SIZE (8)
+ 263:../../protocol/pjrc/usb.c ****     0x95, 0x02,                    //     REPORT_COUNT (2)
+ 264:../../protocol/pjrc/usb.c ****     0x81, 0x06,                    //     INPUT (Data,Var,Rel)
+ 265:../../protocol/pjrc/usb.c ****                                    // ----------------------------  Vertical wheel
+ 266:../../protocol/pjrc/usb.c ****     0x09, 0x38,                    //     USAGE (Wheel)
+ 267:../../protocol/pjrc/usb.c ****     0x15, 0x81,                    //     LOGICAL_MINIMUM (-127)
+ 268:../../protocol/pjrc/usb.c ****     0x25, 0x7f,                    //     LOGICAL_MAXIMUM (127)
+ 269:../../protocol/pjrc/usb.c ****     0x35, 0x00,                    //     PHYSICAL_MINIMUM (0)        - reset physical
+ 270:../../protocol/pjrc/usb.c ****     0x45, 0x00,                    //     PHYSICAL_MAXIMUM (0)
+ 271:../../protocol/pjrc/usb.c ****     0x75, 0x08,                    //     REPORT_SIZE (8)
+ 272:../../protocol/pjrc/usb.c ****     0x95, 0x01,                    //     REPORT_COUNT (1)
+ 273:../../protocol/pjrc/usb.c ****     0x81, 0x06,                    //     INPUT (Data,Var,Rel)
+ 274:../../protocol/pjrc/usb.c ****                                    // ----------------------------  Horizontal wheel
+ 275:../../protocol/pjrc/usb.c ****     0x05, 0x0c,                    //     USAGE_PAGE (Consumer Devices)
+ 276:../../protocol/pjrc/usb.c ****     0x0a, 0x38, 0x02,              //     USAGE (AC Pan)
+ 277:../../protocol/pjrc/usb.c ****     0x15, 0x81,                    //     LOGICAL_MINIMUM (-127)
+ 278:../../protocol/pjrc/usb.c ****     0x25, 0x7f,                    //     LOGICAL_MAXIMUM (127)
+ 279:../../protocol/pjrc/usb.c ****     0x75, 0x08,                    //     REPORT_SIZE (8)
+ 280:../../protocol/pjrc/usb.c ****     0x95, 0x01,                    //     REPORT_COUNT (1)
+ 281:../../protocol/pjrc/usb.c ****     0x81, 0x06,                    //     INPUT (Data,Var,Rel)
+ 282:../../protocol/pjrc/usb.c ****     0xc0,                          //   END_COLLECTION
+ 283:../../protocol/pjrc/usb.c ****     0xc0,                          // END_COLLECTION
+ 284:../../protocol/pjrc/usb.c **** };
+ 285:../../protocol/pjrc/usb.c **** #endif
+ 286:../../protocol/pjrc/usb.c **** 
+ 287:../../protocol/pjrc/usb.c **** static const uint8_t PROGMEM debug_hid_report_desc[] = {
+ 288:../../protocol/pjrc/usb.c **** 	0x06, 0x31, 0xFF,			// Usage Page 0xFF31 (vendor defined)
+ 289:../../protocol/pjrc/usb.c **** 	0x09, 0x74,				// Usage 0x74
+ 290:../../protocol/pjrc/usb.c **** 	0xA1, 0x53,				// Collection 0x53
+ 291:../../protocol/pjrc/usb.c **** 	0x75, 0x08,				// report size = 8 bits
+ 292:../../protocol/pjrc/usb.c **** 	0x15, 0x00,				// logical minimum = 0
+ 293:../../protocol/pjrc/usb.c **** 	0x26, 0xFF, 0x00,			// logical maximum = 255
+ 294:../../protocol/pjrc/usb.c **** 	0x95, DEBUG_TX_SIZE,			// report count
+ 295:../../protocol/pjrc/usb.c **** 	0x09, 0x75,				// usage
+ 296:../../protocol/pjrc/usb.c **** 	0x81, 0x02,				// Input (array)
+ 297:../../protocol/pjrc/usb.c **** 	0xC0					// end collection
+ 298:../../protocol/pjrc/usb.c **** };
+ 299:../../protocol/pjrc/usb.c **** 
+ 300:../../protocol/pjrc/usb.c **** #ifdef EXTRAKEY_ENABLE
+ 301:../../protocol/pjrc/usb.c **** // audio controls & system controls
+ 302:../../protocol/pjrc/usb.c **** // http://www.microsoft.com/whdc/archive/w2kbd.mspx
+ 303:../../protocol/pjrc/usb.c **** static const uint8_t PROGMEM extra_hid_report_desc[] = {
+ 304:../../protocol/pjrc/usb.c ****     /* system control */
+ 305:../../protocol/pjrc/usb.c ****     0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
+ 306:../../protocol/pjrc/usb.c ****     0x09, 0x80,                    // USAGE (System Control)
+ 307:../../protocol/pjrc/usb.c ****     0xa1, 0x01,                    // COLLECTION (Application)
+ 308:../../protocol/pjrc/usb.c ****     0x85, REPORT_ID_SYSTEM,        //   REPORT_ID (2)
+ 309:../../protocol/pjrc/usb.c ****     0x15, 0x01,                    //   LOGICAL_MINIMUM (0x1)
+ 310:../../protocol/pjrc/usb.c ****     0x25, 0xb7,                    //   LOGICAL_MAXIMUM (0xb7)
+ 311:../../protocol/pjrc/usb.c ****     0x19, 0x01,                    //   USAGE_MINIMUM (0x1)
+ 312:../../protocol/pjrc/usb.c ****     0x29, 0xb7,                    //   USAGE_MAXIMUM (0xb7)
+ 313:../../protocol/pjrc/usb.c ****     0x75, 0x10,                    //   REPORT_SIZE (16)
+ 314:../../protocol/pjrc/usb.c ****     0x95, 0x01,                    //   REPORT_COUNT (1)
+ 315:../../protocol/pjrc/usb.c ****     0x81, 0x00,                    //   INPUT (Data,Array,Abs)
+ 316:../../protocol/pjrc/usb.c ****     0xc0,                          // END_COLLECTION
+ 317:../../protocol/pjrc/usb.c ****     /* consumer */
+ 318:../../protocol/pjrc/usb.c ****     0x05, 0x0c,                    // USAGE_PAGE (Consumer Devices)
+ 319:../../protocol/pjrc/usb.c ****     0x09, 0x01,                    // USAGE (Consumer Control)
+ 320:../../protocol/pjrc/usb.c ****     0xa1, 0x01,                    // COLLECTION (Application)
+ 321:../../protocol/pjrc/usb.c ****     0x85, REPORT_ID_CONSUMER,      //   REPORT_ID (3)
+ 322:../../protocol/pjrc/usb.c ****     0x15, 0x01,                    //   LOGICAL_MINIMUM (0x1)
+ 323:../../protocol/pjrc/usb.c ****     0x26, 0x9c, 0x02,              //   LOGICAL_MAXIMUM (0x29c)
+ 324:../../protocol/pjrc/usb.c ****     0x19, 0x01,                    //   USAGE_MINIMUM (0x1)
+ 325:../../protocol/pjrc/usb.c ****     0x2a, 0x9c, 0x02,              //   USAGE_MAXIMUM (0x29c)
+ 326:../../protocol/pjrc/usb.c ****     0x75, 0x10,                    //   REPORT_SIZE (16)
+ 327:../../protocol/pjrc/usb.c ****     0x95, 0x01,                    //   REPORT_COUNT (1)
+ 328:../../protocol/pjrc/usb.c ****     0x81, 0x00,                    //   INPUT (Data,Array,Abs)
+ 329:../../protocol/pjrc/usb.c ****     0xc0,                          // END_COLLECTION
+ 330:../../protocol/pjrc/usb.c **** };
+ 331:../../protocol/pjrc/usb.c **** #endif
+ 332:../../protocol/pjrc/usb.c **** 
+ 333:../../protocol/pjrc/usb.c **** #define KBD_HID_DESC_NUM                0
+ 334:../../protocol/pjrc/usb.c **** #define KBD_HID_DESC_OFFSET             (9+(9+9+7)*KBD_HID_DESC_NUM+9)
+ 335:../../protocol/pjrc/usb.c **** 
+ 336:../../protocol/pjrc/usb.c **** #ifdef MOUSE_ENABLE
+ 337:../../protocol/pjrc/usb.c **** #   define MOUSE_HID_DESC_NUM           (KBD_HID_DESC_NUM + 1)
+ 338:../../protocol/pjrc/usb.c **** #   define MOUSE_HID_DESC_OFFSET        (9+(9+9+7)*MOUSE_HID_DESC_NUM+9)
+ 339:../../protocol/pjrc/usb.c **** #else
+ 340:../../protocol/pjrc/usb.c **** #   define MOUSE_HID_DESC_NUM           (KBD_HID_DESC_NUM + 0)
+ 341:../../protocol/pjrc/usb.c **** #endif
+ 342:../../protocol/pjrc/usb.c **** 
+ 343:../../protocol/pjrc/usb.c **** #ifdef CONSOLE_ENABLE
+ 344:../../protocol/pjrc/usb.c **** #define DEBUG_HID_DESC_NUM              (MOUSE_HID_DESC_NUM + 1)
+ 345:../../protocol/pjrc/usb.c **** #define DEBUG_HID_DESC_OFFSET           (9+(9+9+7)*DEBUG_HID_DESC_NUM+9)
+ 346:../../protocol/pjrc/usb.c **** #else
+ 347:../../protocol/pjrc/usb.c **** #   define DEBUG_HID_DESC_NUM           (MOUSE_HID_DESC_NUM + 0)
+ 348:../../protocol/pjrc/usb.c **** #endif
+ 349:../../protocol/pjrc/usb.c **** 
+ 350:../../protocol/pjrc/usb.c **** #ifdef EXTRAKEY_ENABLE
+ 351:../../protocol/pjrc/usb.c **** #   define EXTRA_HID_DESC_NUM           (DEBUG_HID_DESC_NUM + 1)
+ 352:../../protocol/pjrc/usb.c **** #   define EXTRA_HID_DESC_OFFSET        (9+(9+9+7)*EXTRA_HID_DESC_NUM+9)
+ 353:../../protocol/pjrc/usb.c **** #else
+ 354:../../protocol/pjrc/usb.c **** #   define EXTRA_HID_DESC_NUM           (DEBUG_HID_DESC_NUM + 0)
+ 355:../../protocol/pjrc/usb.c **** #endif
+ 356:../../protocol/pjrc/usb.c **** 
+ 357:../../protocol/pjrc/usb.c **** #ifdef NKRO_ENABLE
+ 358:../../protocol/pjrc/usb.c **** #   define KBD2_HID_DESC_NUM            (EXTRA_HID_DESC_NUM + 1)
+ 359:../../protocol/pjrc/usb.c **** #   define KBD2_HID_DESC_OFFSET         (9+(9+9+7)*EXTRA_HID_DESC_NUM+9)
+ 360:../../protocol/pjrc/usb.c **** #else
+ 361:../../protocol/pjrc/usb.c **** #   define KBD2_HID_DESC_NUM            (EXTRA_HID_DESC_NUM + 0)
+ 362:../../protocol/pjrc/usb.c **** #endif
+ 363:../../protocol/pjrc/usb.c **** 
+ 364:../../protocol/pjrc/usb.c **** #define NUM_INTERFACES                  (KBD2_HID_DESC_NUM + 1)
+ 365:../../protocol/pjrc/usb.c **** #define CONFIG1_DESC_SIZE               (9+(9+9+7)*NUM_INTERFACES)
+ 366:../../protocol/pjrc/usb.c **** static const uint8_t PROGMEM config1_descriptor[CONFIG1_DESC_SIZE] = {
+ 367:../../protocol/pjrc/usb.c **** 	// configuration descriptor, USB spec 9.6.3, page 264-266, Table 9-10
+ 368:../../protocol/pjrc/usb.c **** 	9, 					// bLength;
+ 369:../../protocol/pjrc/usb.c **** 	2,					// bDescriptorType;
+ 370:../../protocol/pjrc/usb.c **** 	LSB(CONFIG1_DESC_SIZE),			// wTotalLength
+ 371:../../protocol/pjrc/usb.c **** 	MSB(CONFIG1_DESC_SIZE),
+ 372:../../protocol/pjrc/usb.c **** 	NUM_INTERFACES,				// bNumInterfaces
+ 373:../../protocol/pjrc/usb.c **** 	1,					// bConfigurationValue
+ 374:../../protocol/pjrc/usb.c **** 	0,					// iConfiguration
+ 375:../../protocol/pjrc/usb.c **** 	0xA0,					// bmAttributes
+ 376:../../protocol/pjrc/usb.c **** 	50,					// bMaxPower
+ 377:../../protocol/pjrc/usb.c **** 
+ 378:../../protocol/pjrc/usb.c **** 	// interface descriptor, USB spec 9.6.5, page 267-269, Table 9-12
+ 379:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 380:../../protocol/pjrc/usb.c **** 	4,					// bDescriptorType
+ 381:../../protocol/pjrc/usb.c **** 	KBD_INTERFACE,				// bInterfaceNumber
+ 382:../../protocol/pjrc/usb.c **** 	0,					// bAlternateSetting
+ 383:../../protocol/pjrc/usb.c **** 	1,					// bNumEndpoints
+ 384:../../protocol/pjrc/usb.c **** 	0x03,					// bInterfaceClass (0x03 = HID)
+ 385:../../protocol/pjrc/usb.c **** 	0x01,					// bInterfaceSubClass (0x01 = Boot)
+ 386:../../protocol/pjrc/usb.c **** 	0x01,					// bInterfaceProtocol (0x01 = Keyboard)
+ 387:../../protocol/pjrc/usb.c **** 	0,					// iInterface
+ 388:../../protocol/pjrc/usb.c **** 	// HID descriptor, HID 1.11 spec, section 6.2.1
+ 389:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 390:../../protocol/pjrc/usb.c **** 	0x21,					// bDescriptorType
+ 391:../../protocol/pjrc/usb.c **** 	0x11, 0x01,				// bcdHID
+ 392:../../protocol/pjrc/usb.c **** 	0,					// bCountryCode
+ 393:../../protocol/pjrc/usb.c **** 	1,					// bNumDescriptors
+ 394:../../protocol/pjrc/usb.c **** 	0x22,					// bDescriptorType
+ 395:../../protocol/pjrc/usb.c **** 	sizeof(keyboard_hid_report_desc),     	// wDescriptorLength
+ 396:../../protocol/pjrc/usb.c **** 	0,
+ 397:../../protocol/pjrc/usb.c **** 	// endpoint descriptor, USB spec 9.6.6, page 269-271, Table 9-13
+ 398:../../protocol/pjrc/usb.c **** 	7,					// bLength
+ 399:../../protocol/pjrc/usb.c **** 	5,					// bDescriptorType
+ 400:../../protocol/pjrc/usb.c **** 	KBD_ENDPOINT | 0x80,			// bEndpointAddress
+ 401:../../protocol/pjrc/usb.c **** 	0x03,					// bmAttributes (0x03=intr)
+ 402:../../protocol/pjrc/usb.c **** 	KBD_SIZE, 0,				// wMaxPacketSize
+ 403:../../protocol/pjrc/usb.c **** 	10,					// bInterval
+ 404:../../protocol/pjrc/usb.c **** 
+ 405:../../protocol/pjrc/usb.c **** #ifdef MOUSE_ENABLE
+ 406:../../protocol/pjrc/usb.c **** 	// interface descriptor, USB spec 9.6.5, page 267-269, Table 9-12
+ 407:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 408:../../protocol/pjrc/usb.c **** 	4,					// bDescriptorType
+ 409:../../protocol/pjrc/usb.c **** 	MOUSE_INTERFACE,			// bInterfaceNumber
+ 410:../../protocol/pjrc/usb.c **** 	0,					// bAlternateSetting
+ 411:../../protocol/pjrc/usb.c **** 	1,					// bNumEndpoints
+ 412:../../protocol/pjrc/usb.c **** 	0x03,					// bInterfaceClass (0x03 = HID)
+ 413:../../protocol/pjrc/usb.c ****         // ThinkPad T23 BIOS doesn't work with boot mouse.
+ 414:../../protocol/pjrc/usb.c **** 	0x00,					// bInterfaceSubClass (0x01 = Boot)
+ 415:../../protocol/pjrc/usb.c **** 	0x00,					// bInterfaceProtocol (0x02 = Mouse)
+ 416:../../protocol/pjrc/usb.c **** /*
+ 417:../../protocol/pjrc/usb.c **** 	0x01,					// bInterfaceSubClass (0x01 = Boot)
+ 418:../../protocol/pjrc/usb.c **** 	0x02,					// bInterfaceProtocol (0x02 = Mouse)
+ 419:../../protocol/pjrc/usb.c **** */
+ 420:../../protocol/pjrc/usb.c **** 	0,					// iInterface
+ 421:../../protocol/pjrc/usb.c **** 	// HID descriptor, HID 1.11 spec, section 6.2.1
+ 422:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 423:../../protocol/pjrc/usb.c **** 	0x21,					// bDescriptorType
+ 424:../../protocol/pjrc/usb.c **** 	0x11, 0x01,				// bcdHID
+ 425:../../protocol/pjrc/usb.c **** 	0,					// bCountryCode
+ 426:../../protocol/pjrc/usb.c **** 	1,					// bNumDescriptors
+ 427:../../protocol/pjrc/usb.c **** 	0x22,					// bDescriptorType
+ 428:../../protocol/pjrc/usb.c **** 	sizeof(mouse_hid_report_desc),		// wDescriptorLength
+ 429:../../protocol/pjrc/usb.c **** 	0,
+ 430:../../protocol/pjrc/usb.c **** 	// endpoint descriptor, USB spec 9.6.6, page 269-271, Table 9-13
+ 431:../../protocol/pjrc/usb.c **** 	7,					// bLength
+ 432:../../protocol/pjrc/usb.c **** 	5,					// bDescriptorType
+ 433:../../protocol/pjrc/usb.c **** 	MOUSE_ENDPOINT | 0x80,			// bEndpointAddress
+ 434:../../protocol/pjrc/usb.c **** 	0x03,					// bmAttributes (0x03=intr)
+ 435:../../protocol/pjrc/usb.c **** 	MOUSE_SIZE, 0,				// wMaxPacketSize
+ 436:../../protocol/pjrc/usb.c **** 	1,					// bInterval
+ 437:../../protocol/pjrc/usb.c **** #endif
+ 438:../../protocol/pjrc/usb.c **** 
+ 439:../../protocol/pjrc/usb.c **** #ifdef CONSOLE_ENABLE
+ 440:../../protocol/pjrc/usb.c **** 	// interface descriptor, USB spec 9.6.5, page 267-269, Table 9-12
+ 441:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 442:../../protocol/pjrc/usb.c **** 	4,					// bDescriptorType
+ 443:../../protocol/pjrc/usb.c **** 	DEBUG_INTERFACE,			// bInterfaceNumber
+ 444:../../protocol/pjrc/usb.c **** 	0,					// bAlternateSetting
+ 445:../../protocol/pjrc/usb.c **** 	1,					// bNumEndpoints
+ 446:../../protocol/pjrc/usb.c **** 	0x03,					// bInterfaceClass (0x03 = HID)
+ 447:../../protocol/pjrc/usb.c **** 	0x00,					// bInterfaceSubClass
+ 448:../../protocol/pjrc/usb.c **** 	0x00,					// bInterfaceProtocol
+ 449:../../protocol/pjrc/usb.c **** 	0,					// iInterface
+ 450:../../protocol/pjrc/usb.c **** 	// HID descriptor, HID 1.11 spec, section 6.2.1
+ 451:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 452:../../protocol/pjrc/usb.c **** 	0x21,					// bDescriptorType
+ 453:../../protocol/pjrc/usb.c **** 	0x11, 0x01,				// bcdHID
+ 454:../../protocol/pjrc/usb.c **** 	0,					// bCountryCode
+ 455:../../protocol/pjrc/usb.c **** 	1,					// bNumDescriptors
+ 456:../../protocol/pjrc/usb.c **** 	0x22,					// bDescriptorType
+ 457:../../protocol/pjrc/usb.c **** 	sizeof(debug_hid_report_desc),		// wDescriptorLength
+ 458:../../protocol/pjrc/usb.c **** 	0,
+ 459:../../protocol/pjrc/usb.c **** 	// endpoint descriptor, USB spec 9.6.6, page 269-271, Table 9-13
+ 460:../../protocol/pjrc/usb.c **** 	7,					// bLength
+ 461:../../protocol/pjrc/usb.c **** 	5,					// bDescriptorType
+ 462:../../protocol/pjrc/usb.c **** 	DEBUG_TX_ENDPOINT | 0x80,		// bEndpointAddress
+ 463:../../protocol/pjrc/usb.c **** 	0x03,					// bmAttributes (0x03=intr)
+ 464:../../protocol/pjrc/usb.c **** 	DEBUG_TX_SIZE, 0,			// wMaxPacketSize
+ 465:../../protocol/pjrc/usb.c **** 	1,					// bInterval
+ 466:../../protocol/pjrc/usb.c **** #endif
+ 467:../../protocol/pjrc/usb.c **** 
+ 468:../../protocol/pjrc/usb.c **** #ifdef EXTRAKEY_ENABLE
+ 469:../../protocol/pjrc/usb.c **** 	// interface descriptor, USB spec 9.6.5, page 267-269, Table 9-12
+ 470:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 471:../../protocol/pjrc/usb.c **** 	4,					// bDescriptorType
+ 472:../../protocol/pjrc/usb.c **** 	EXTRA_INTERFACE,			// bInterfaceNumber
+ 473:../../protocol/pjrc/usb.c **** 	0,					// bAlternateSetting
+ 474:../../protocol/pjrc/usb.c **** 	1,					// bNumEndpoints
+ 475:../../protocol/pjrc/usb.c **** 	0x03,					// bInterfaceClass (0x03 = HID)
+ 476:../../protocol/pjrc/usb.c **** 	0x00,					// bInterfaceSubClass
+ 477:../../protocol/pjrc/usb.c **** 	0x00,					// bInterfaceProtocol
+ 478:../../protocol/pjrc/usb.c **** 	0,					// iInterface
+ 479:../../protocol/pjrc/usb.c **** 	// HID descriptor, HID 1.11 spec, section 6.2.1
+ 480:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 481:../../protocol/pjrc/usb.c **** 	0x21,					// bDescriptorType
+ 482:../../protocol/pjrc/usb.c **** 	0x11, 0x01,				// bcdHID
+ 483:../../protocol/pjrc/usb.c **** 	0,					// bCountryCode
+ 484:../../protocol/pjrc/usb.c **** 	1,					// bNumDescriptors
+ 485:../../protocol/pjrc/usb.c **** 	0x22,					// bDescriptorType
+ 486:../../protocol/pjrc/usb.c **** 	sizeof(extra_hid_report_desc),		// wDescriptorLength
+ 487:../../protocol/pjrc/usb.c **** 	0,
+ 488:../../protocol/pjrc/usb.c **** 	// endpoint descriptor, USB spec 9.6.6, page 269-271, Table 9-13
+ 489:../../protocol/pjrc/usb.c **** 	7,					// bLength
+ 490:../../protocol/pjrc/usb.c **** 	5,					// bDescriptorType
+ 491:../../protocol/pjrc/usb.c **** 	EXTRA_ENDPOINT | 0x80,			// bEndpointAddress
+ 492:../../protocol/pjrc/usb.c **** 	0x03,					// bmAttributes (0x03=intr)
+ 493:../../protocol/pjrc/usb.c **** 	EXTRA_SIZE, 0,				// wMaxPacketSize
+ 494:../../protocol/pjrc/usb.c **** 	10,					// bInterval
+ 495:../../protocol/pjrc/usb.c **** #endif
+ 496:../../protocol/pjrc/usb.c **** 
+ 497:../../protocol/pjrc/usb.c **** #ifdef NKRO_ENABLE
+ 498:../../protocol/pjrc/usb.c **** 	// interface descriptor, USB spec 9.6.5, page 267-269, Table 9-12
+ 499:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 500:../../protocol/pjrc/usb.c **** 	4,					// bDescriptorType
+ 501:../../protocol/pjrc/usb.c **** 	KBD2_INTERFACE,				// bInterfaceNumber
+ 502:../../protocol/pjrc/usb.c **** 	0,					// bAlternateSetting
+ 503:../../protocol/pjrc/usb.c **** 	1,					// bNumEndpoints
+ 504:../../protocol/pjrc/usb.c **** 	0x03,					// bInterfaceClass (0x03 = HID)
+ 505:../../protocol/pjrc/usb.c **** 	0x00,					// bInterfaceSubClass (0x01 = Boot)
+ 506:../../protocol/pjrc/usb.c **** 	0x00,					// bInterfaceProtocol (0x01 = Keyboard)
+ 507:../../protocol/pjrc/usb.c **** 	0,					// iInterface
+ 508:../../protocol/pjrc/usb.c **** 	// HID descriptor, HID 1.11 spec, section 6.2.1
+ 509:../../protocol/pjrc/usb.c **** 	9,					// bLength
+ 510:../../protocol/pjrc/usb.c **** 	0x21,					// bDescriptorType
+ 511:../../protocol/pjrc/usb.c **** 	0x11, 0x01,				// bcdHID
+ 512:../../protocol/pjrc/usb.c **** 	0,					// bCountryCode
+ 513:../../protocol/pjrc/usb.c **** 	1,					// bNumDescriptors
+ 514:../../protocol/pjrc/usb.c **** 	0x22,					// bDescriptorType
+ 515:../../protocol/pjrc/usb.c **** 	sizeof(keyboard2_hid_report_desc),     	// wDescriptorLength
+ 516:../../protocol/pjrc/usb.c **** 	0,
+ 517:../../protocol/pjrc/usb.c **** 	// endpoint descriptor, USB spec 9.6.6, page 269-271, Table 9-13
+ 518:../../protocol/pjrc/usb.c **** 	7,					// bLength
+ 519:../../protocol/pjrc/usb.c **** 	5,					// bDescriptorType
+ 520:../../protocol/pjrc/usb.c **** 	KBD2_ENDPOINT | 0x80,			// bEndpointAddress
+ 521:../../protocol/pjrc/usb.c **** 	0x03,					// bmAttributes (0x03=intr)
+ 522:../../protocol/pjrc/usb.c **** 	KBD2_SIZE, 0,				// wMaxPacketSize
+ 523:../../protocol/pjrc/usb.c **** 	1,					// bInterval
+ 524:../../protocol/pjrc/usb.c **** #endif
+ 525:../../protocol/pjrc/usb.c **** };
+ 526:../../protocol/pjrc/usb.c **** 
+ 527:../../protocol/pjrc/usb.c **** // If you're desperate for a little extra code memory, these strings
+ 528:../../protocol/pjrc/usb.c **** // can be completely removed if iManufacturer, iProduct, iSerialNumber
+ 529:../../protocol/pjrc/usb.c **** // in the device desciptor are changed to zeros.
+ 530:../../protocol/pjrc/usb.c **** struct usb_string_descriptor_struct {
+ 531:../../protocol/pjrc/usb.c **** 	uint8_t bLength;
+ 532:../../protocol/pjrc/usb.c **** 	uint8_t bDescriptorType;
+ 533:../../protocol/pjrc/usb.c **** 	int16_t wString[];
+ 534:../../protocol/pjrc/usb.c **** };
+ 535:../../protocol/pjrc/usb.c **** static const struct usb_string_descriptor_struct PROGMEM string0 = {
+ 536:../../protocol/pjrc/usb.c **** 	4,
+ 537:../../protocol/pjrc/usb.c **** 	3,
+ 538:../../protocol/pjrc/usb.c **** 	{0x0409}
+ 539:../../protocol/pjrc/usb.c **** };
+ 540:../../protocol/pjrc/usb.c **** static const struct usb_string_descriptor_struct PROGMEM string1 = {
+ 541:../../protocol/pjrc/usb.c **** 	sizeof(STR_MANUFACTURER),
+ 542:../../protocol/pjrc/usb.c **** 	3,
+ 543:../../protocol/pjrc/usb.c **** 	STR_MANUFACTURER
+ 544:../../protocol/pjrc/usb.c **** };
+ 545:../../protocol/pjrc/usb.c **** static const struct usb_string_descriptor_struct PROGMEM string2 = {
+ 546:../../protocol/pjrc/usb.c **** 	sizeof(STR_PRODUCT),
+ 547:../../protocol/pjrc/usb.c **** 	3,
+ 548:../../protocol/pjrc/usb.c **** 	STR_PRODUCT
+ 549:../../protocol/pjrc/usb.c **** };
+ 550:../../protocol/pjrc/usb.c **** 
+ 551:../../protocol/pjrc/usb.c **** // This table defines which descriptor data is sent for each specific
+ 552:../../protocol/pjrc/usb.c **** // request from the host (in wValue and wIndex).
+ 553:../../protocol/pjrc/usb.c **** static const struct descriptor_list_struct {
+ 554:../../protocol/pjrc/usb.c **** 	uint16_t	wValue;     // descriptor type
+ 555:../../protocol/pjrc/usb.c **** 	uint16_t	wIndex;
+ 556:../../protocol/pjrc/usb.c **** 	const uint8_t	*addr;
+ 557:../../protocol/pjrc/usb.c **** 	uint8_t		length;
+ 558:../../protocol/pjrc/usb.c **** } PROGMEM descriptor_list[] = {
+ 559:../../protocol/pjrc/usb.c ****         // DEVICE descriptor
+ 560:../../protocol/pjrc/usb.c **** 	{0x0100, 0x0000, device_descriptor, sizeof(device_descriptor)},
+ 561:../../protocol/pjrc/usb.c ****         // CONFIGURATION descriptor
+ 562:../../protocol/pjrc/usb.c **** 	{0x0200, 0x0000, config1_descriptor, sizeof(config1_descriptor)},
+ 563:../../protocol/pjrc/usb.c ****         // HID/REPORT descriptors
+ 564:../../protocol/pjrc/usb.c **** 	{0x2100, KBD_INTERFACE, config1_descriptor+KBD_HID_DESC_OFFSET, 9},
+ 565:../../protocol/pjrc/usb.c **** 	{0x2200, KBD_INTERFACE, keyboard_hid_report_desc, sizeof(keyboard_hid_report_desc)},
+ 566:../../protocol/pjrc/usb.c **** #ifdef MOUSE_ENABLE
+ 567:../../protocol/pjrc/usb.c **** 	{0x2100, MOUSE_INTERFACE, config1_descriptor+MOUSE_HID_DESC_OFFSET, 9},
+ 568:../../protocol/pjrc/usb.c **** 	{0x2200, MOUSE_INTERFACE, mouse_hid_report_desc, sizeof(mouse_hid_report_desc)},
+ 569:../../protocol/pjrc/usb.c **** #endif
+ 570:../../protocol/pjrc/usb.c **** #ifdef CONSOLE_ENABLE
+ 571:../../protocol/pjrc/usb.c **** 	{0x2100, DEBUG_INTERFACE, config1_descriptor+DEBUG_HID_DESC_OFFSET, 9},
+ 572:../../protocol/pjrc/usb.c **** 	{0x2200, DEBUG_INTERFACE, debug_hid_report_desc, sizeof(debug_hid_report_desc)},
+ 573:../../protocol/pjrc/usb.c **** #endif
+ 574:../../protocol/pjrc/usb.c **** #ifdef EXTRAKEY_ENABLE
+ 575:../../protocol/pjrc/usb.c **** 	{0x2100, EXTRA_INTERFACE, config1_descriptor+EXTRA_HID_DESC_OFFSET, 9},
+ 576:../../protocol/pjrc/usb.c **** 	{0x2200, EXTRA_INTERFACE, extra_hid_report_desc, sizeof(extra_hid_report_desc)},
+ 577:../../protocol/pjrc/usb.c **** #endif
+ 578:../../protocol/pjrc/usb.c **** #ifdef NKRO_ENABLE
+ 579:../../protocol/pjrc/usb.c **** 	{0x2100, KBD2_INTERFACE, config1_descriptor+KBD2_HID_DESC_OFFSET, 9},
+ 580:../../protocol/pjrc/usb.c **** 	{0x2200, KBD2_INTERFACE, keyboard2_hid_report_desc, sizeof(keyboard2_hid_report_desc)},
+ 581:../../protocol/pjrc/usb.c **** #endif
+ 582:../../protocol/pjrc/usb.c ****         // STRING descriptors
+ 583:../../protocol/pjrc/usb.c **** 	{0x0300, 0x0000, (const uint8_t *)&string0, 4},
+ 584:../../protocol/pjrc/usb.c **** 	{0x0301, 0x0409, (const uint8_t *)&string1, sizeof(STR_MANUFACTURER)},
+ 585:../../protocol/pjrc/usb.c **** 	{0x0302, 0x0409, (const uint8_t *)&string2, sizeof(STR_PRODUCT)}
+ 586:../../protocol/pjrc/usb.c **** };
+ 587:../../protocol/pjrc/usb.c **** #define NUM_DESC_LIST (sizeof(descriptor_list)/sizeof(struct descriptor_list_struct))
+ 588:../../protocol/pjrc/usb.c **** 
+ 589:../../protocol/pjrc/usb.c **** 
+ 590:../../protocol/pjrc/usb.c **** /**************************************************************************
+ 591:../../protocol/pjrc/usb.c ****  *
+ 592:../../protocol/pjrc/usb.c ****  *  Variables - these are the only non-stack RAM usage
+ 593:../../protocol/pjrc/usb.c ****  *
+ 594:../../protocol/pjrc/usb.c ****  **************************************************************************/
+ 595:../../protocol/pjrc/usb.c **** 
+ 596:../../protocol/pjrc/usb.c **** // zero when we are not configured, non-zero when enumerated
+ 597:../../protocol/pjrc/usb.c **** static volatile uint8_t usb_configuration=0;
+ 598:../../protocol/pjrc/usb.c **** 
+ 599:../../protocol/pjrc/usb.c **** 
+ 600:../../protocol/pjrc/usb.c **** /**************************************************************************
+ 601:../../protocol/pjrc/usb.c ****  *
+ 602:../../protocol/pjrc/usb.c ****  *  Public Functions - these are the API intended for the user
+ 603:../../protocol/pjrc/usb.c ****  *
+ 604:../../protocol/pjrc/usb.c ****  **************************************************************************/
+ 605:../../protocol/pjrc/usb.c **** 
+ 606:../../protocol/pjrc/usb.c **** 
+ 607:../../protocol/pjrc/usb.c **** // initialize USB
+ 608:../../protocol/pjrc/usb.c **** void usb_init(void)
+ 609:../../protocol/pjrc/usb.c **** {
+ 610:../../protocol/pjrc/usb.c **** 	HW_CONFIG();
+ 611:../../protocol/pjrc/usb.c **** 	USB_FREEZE();				// enable USB
+ 612:../../protocol/pjrc/usb.c **** 	PLL_CONFIG();				// config PLL
+ 613:../../protocol/pjrc/usb.c ****         while (!(PLLCSR & (1<<PLOCK))) ;	// wait for PLL lock
+ 614:../../protocol/pjrc/usb.c ****         USB_CONFIG();				// start USB clock
+ 615:../../protocol/pjrc/usb.c ****         UDCON = 0;				// enable attach resistor
+ 616:../../protocol/pjrc/usb.c **** 	usb_configuration = 0;
+ 617:../../protocol/pjrc/usb.c ****         suspend = false;
+ 618:../../protocol/pjrc/usb.c ****         UDIEN = (1<<EORSTE)|(1<<SOFE)|(1<<SUSPE)|(1<<WAKEUPE);
+ 619:../../protocol/pjrc/usb.c **** 	sei();
+ 620:../../protocol/pjrc/usb.c **** }
+ 621:../../protocol/pjrc/usb.c **** 
+ 622:../../protocol/pjrc/usb.c **** // return 0 if the USB is not configured, or the configuration
+ 623:../../protocol/pjrc/usb.c **** // number selected by the HOST
+ 624:../../protocol/pjrc/usb.c **** uint8_t usb_configured(void)
+ 625:../../protocol/pjrc/usb.c **** {
+ 626:../../protocol/pjrc/usb.c **** 	return usb_configuration && !suspend;
+ 627:../../protocol/pjrc/usb.c **** }
+ 628:../../protocol/pjrc/usb.c **** 
+ 629:../../protocol/pjrc/usb.c **** void usb_remote_wakeup(void)
+ 630:../../protocol/pjrc/usb.c **** {
+ 631:../../protocol/pjrc/usb.c ****     UDCON |= (1<<RMWKUP);
+ 632:../../protocol/pjrc/usb.c ****     while (UDCON & (1<<RMWKUP));
+ 633:../../protocol/pjrc/usb.c **** }
+ 634:../../protocol/pjrc/usb.c **** 
+ 635:../../protocol/pjrc/usb.c **** 
+ 636:../../protocol/pjrc/usb.c **** 
+ 637:../../protocol/pjrc/usb.c **** /**************************************************************************
+ 638:../../protocol/pjrc/usb.c ****  *
+ 639:../../protocol/pjrc/usb.c ****  *  Private Functions - not intended for general user consumption....
+ 640:../../protocol/pjrc/usb.c ****  *
+ 641:../../protocol/pjrc/usb.c ****  **************************************************************************/
+ 642:../../protocol/pjrc/usb.c **** 
+ 643:../../protocol/pjrc/usb.c **** 
+ 644:../../protocol/pjrc/usb.c **** 
+ 645:../../protocol/pjrc/usb.c **** // USB Device Interrupt - handle all device-level events
+ 646:../../protocol/pjrc/usb.c **** // the transmit buffer flushing is triggered by the start of frame
+ 647:../../protocol/pjrc/usb.c **** //
+ 648:../../protocol/pjrc/usb.c **** ISR(USB_GEN_vect)
+ 649:../../protocol/pjrc/usb.c **** {
+ 650:../../protocol/pjrc/usb.c **** 	uint8_t intbits, t;
+ 651:../../protocol/pjrc/usb.c **** 	static uint8_t div4=0;
+ 652:../../protocol/pjrc/usb.c **** 
+ 653:../../protocol/pjrc/usb.c ****         intbits = UDINT;
+ 654:../../protocol/pjrc/usb.c ****         UDINT = 0;
+ 655:../../protocol/pjrc/usb.c ****         if ((intbits & (1<<SUSPI)) && (UDIEN & (1<<SUSPE)) && usb_configuration) {
+ 656:../../protocol/pjrc/usb.c **** #ifdef SLEEP_LED_ENABLE
+ 657:../../protocol/pjrc/usb.c ****             sleep_led_enable();
+ 658:../../protocol/pjrc/usb.c **** #endif
+ 659:../../protocol/pjrc/usb.c ****             UDIEN &= ~(1<<SUSPE);
+ 660:../../protocol/pjrc/usb.c ****             UDIEN |= (1<<WAKEUPE);
+ 661:../../protocol/pjrc/usb.c ****             suspend = true;
+ 662:../../protocol/pjrc/usb.c ****         }
+ 663:../../protocol/pjrc/usb.c ****         if ((intbits & (1<<WAKEUPI)) && (UDIEN & (1<<WAKEUPE)) && usb_configuration) {
+ 664:../../protocol/pjrc/usb.c ****             suspend_wakeup_init();
+ 665:../../protocol/pjrc/usb.c **** #ifdef SLEEP_LED_ENABLE
+ 666:../../protocol/pjrc/usb.c ****             sleep_led_disable();
+ 667:../../protocol/pjrc/usb.c ****             // NOTE: converters may not accept this
+ 668:../../protocol/pjrc/usb.c ****             led_set(host_keyboard_leds());
+ 669:../../protocol/pjrc/usb.c **** #endif
+ 670:../../protocol/pjrc/usb.c **** 
+ 671:../../protocol/pjrc/usb.c ****             UDIEN |= (1<<SUSPE);
+ 672:../../protocol/pjrc/usb.c ****             UDIEN &= ~(1<<WAKEUPE);
+ 673:../../protocol/pjrc/usb.c ****             suspend = false;
+ 674:../../protocol/pjrc/usb.c ****         }
+ 675:../../protocol/pjrc/usb.c ****         if (intbits & (1<<EORSTI)) {
+ 676:../../protocol/pjrc/usb.c **** 		UENUM = 0;
+ 677:../../protocol/pjrc/usb.c **** 		UECONX = 1;
+ 678:../../protocol/pjrc/usb.c **** 		UECFG0X = EP_TYPE_CONTROL;
+ 679:../../protocol/pjrc/usb.c **** 		UECFG1X = EP_SIZE(ENDPOINT0_SIZE) | EP_SINGLE_BUFFER;
+ 680:../../protocol/pjrc/usb.c **** 		UEIENX = (1<<RXSTPE);
+ 681:../../protocol/pjrc/usb.c **** 		usb_configuration = 0;
+ 682:../../protocol/pjrc/usb.c ****         }
+ 683:../../protocol/pjrc/usb.c **** 	if ((intbits & (1<<SOFI)) && usb_configuration) {
+ 684:../../protocol/pjrc/usb.c **** 		t = debug_flush_timer;
+ 685:../../protocol/pjrc/usb.c **** 		if (t) {
+ 686:../../protocol/pjrc/usb.c **** 			debug_flush_timer = -- t;
+ 687:../../protocol/pjrc/usb.c **** 			if (!t) {
+ 688:../../protocol/pjrc/usb.c **** 				UENUM = DEBUG_TX_ENDPOINT;
+ 689:../../protocol/pjrc/usb.c **** 				while ((UEINTX & (1<<RWAL))) {
+ 690:../../protocol/pjrc/usb.c **** 					UEDATX = 0;
+ 691:../../protocol/pjrc/usb.c **** 				}
+ 692:../../protocol/pjrc/usb.c **** 				UEINTX = 0x3A;
+ 693:../../protocol/pjrc/usb.c **** 			}
+ 694:../../protocol/pjrc/usb.c **** 		}
+ 695:../../protocol/pjrc/usb.c ****                 /* TODO: should keep IDLE rate on each keyboard interface */
+ 696:../../protocol/pjrc/usb.c **** #ifdef NKRO_ENABLE
+ 697:../../protocol/pjrc/usb.c **** 		if (!keyboard_nkro && keyboard_idle && (++div4 & 3) == 0) {
+ 698:../../protocol/pjrc/usb.c **** #else
+ 699:../../protocol/pjrc/usb.c **** 		if (keyboard_idle && (++div4 & 3) == 0) {
+ 700:../../protocol/pjrc/usb.c **** #endif
+ 701:../../protocol/pjrc/usb.c **** 			UENUM = KBD_ENDPOINT;
+ 702:../../protocol/pjrc/usb.c **** 			if (UEINTX & (1<<RWAL)) {
+ 703:../../protocol/pjrc/usb.c **** 				usb_keyboard_idle_count++;
+ 704:../../protocol/pjrc/usb.c **** 				if (usb_keyboard_idle_count == keyboard_idle) {
+ 705:../../protocol/pjrc/usb.c **** 					usb_keyboard_idle_count = 0;
+ 706:../../protocol/pjrc/usb.c ****                                         /* TODO: fix keyboard_report inconsistency */
+ 707:../../protocol/pjrc/usb.c **** /* To avoid Mac SET_IDLE behaviour.
+ 708:../../protocol/pjrc/usb.c **** 					UEDATX = keyboard_report_prev->mods;
+ 709:../../protocol/pjrc/usb.c **** 					UEDATX = 0;
+ 710:../../protocol/pjrc/usb.c ****                                         uint8_t keys = keyboard_protocol ? KBD_REPORT_KEYS : 6;
+ 711:../../protocol/pjrc/usb.c **** 					for (uint8_t i=0; i<keys; i++) {
+ 712:../../protocol/pjrc/usb.c **** 						UEDATX = keyboard_report_prev->keys[i];
+ 713:../../protocol/pjrc/usb.c **** 					}
+ 714:../../protocol/pjrc/usb.c **** 					UEINTX = 0x3A;
+ 715:../../protocol/pjrc/usb.c **** */
+ 716:../../protocol/pjrc/usb.c **** 				}
+ 717:../../protocol/pjrc/usb.c **** 			}
+ 718:../../protocol/pjrc/usb.c **** 		}
+ 719:../../protocol/pjrc/usb.c **** 	}
+ 720:../../protocol/pjrc/usb.c **** }
+ 721:../../protocol/pjrc/usb.c **** 
+ 722:../../protocol/pjrc/usb.c **** 
+ 723:../../protocol/pjrc/usb.c **** 
+ 724:../../protocol/pjrc/usb.c **** // Misc functions to wait for ready and send/receive packets
+ 725:../../protocol/pjrc/usb.c **** static inline void usb_wait_in_ready(void)
+ 726:../../protocol/pjrc/usb.c **** {
+  15               		.loc 1 726 0
+  16               		.cfi_startproc
+  17               	/* prologue: function */
+  18               	/* frame size = 0 */
+  19               	/* stack size = 0 */
+  20               	.L__stack_usage = 0
+  21               	.L3:
+ 727:../../protocol/pjrc/usb.c **** 	while (!(UEINTX & (1<<TXINI))) ;
+  22               		.loc 1 727 0 discriminator 1
+  23 0000 8091 E800 		lds r24,232
+  24 0004 80FF      		sbrs r24,0
+  25 0006 00C0      		rjmp .L3
+  26               	/* epilogue start */
+ 728:../../protocol/pjrc/usb.c **** }
+  27               		.loc 1 728 0
+  28 0008 0895      		ret
+  29               		.cfi_endproc
+  30               	.LFE10:
+  32               		.section	.text.matrix_power_up,"ax",@progbits
+  33               		.weak	matrix_power_up
+  35               	matrix_power_up:
+  36               	.LFB4:
+  37               		.file 2 "../../common/keyboard.h"
+   1:../../common/keyboard.h **** /*
+   2:../../common/keyboard.h **** Copyright 2011,2012,2013 Jun Wako <wakojun@gmail.com>
+   3:../../common/keyboard.h **** 
+   4:../../common/keyboard.h **** This program is free software: you can redistribute it and/or modify
+   5:../../common/keyboard.h **** it under the terms of the GNU General Public License as published by
+   6:../../common/keyboard.h **** the Free Software Foundation, either version 2 of the License, or
+   7:../../common/keyboard.h **** (at your option) any later version.
+   8:../../common/keyboard.h **** 
+   9:../../common/keyboard.h **** This program is distributed in the hope that it will be useful,
+  10:../../common/keyboard.h **** but WITHOUT ANY WARRANTY; without even the implied warranty of
+  11:../../common/keyboard.h **** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  12:../../common/keyboard.h **** GNU General Public License for more details.
+  13:../../common/keyboard.h **** 
+  14:../../common/keyboard.h **** You should have received a copy of the GNU General Public License
+  15:../../common/keyboard.h **** along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  16:../../common/keyboard.h **** */
+  17:../../common/keyboard.h **** 
+  18:../../common/keyboard.h **** #ifndef KEYBOARD_H
+  19:../../common/keyboard.h **** #define KEYBOARD_H
+  20:../../common/keyboard.h **** 
+  21:../../common/keyboard.h **** #include <stdbool.h>
+  22:../../common/keyboard.h **** #include <stdint.h>
+  23:../../common/keyboard.h **** 
+  24:../../common/keyboard.h **** 
+  25:../../common/keyboard.h **** #ifdef __cplusplus
+  26:../../common/keyboard.h **** extern "C" {
+  27:../../common/keyboard.h **** #endif
+  28:../../common/keyboard.h **** 
+  29:../../common/keyboard.h **** /* key matrix position */
+  30:../../common/keyboard.h **** typedef struct {
+  31:../../common/keyboard.h ****     uint8_t col;
+  32:../../common/keyboard.h ****     uint8_t row;
+  33:../../common/keyboard.h **** } keypos_t;
+  34:../../common/keyboard.h **** 
+  35:../../common/keyboard.h **** /* key event */
+  36:../../common/keyboard.h **** typedef struct {
+  37:../../common/keyboard.h ****     keypos_t key;
+  38:../../common/keyboard.h ****     bool     pressed;
+  39:../../common/keyboard.h ****     uint16_t time;
+  40:../../common/keyboard.h **** } keyevent_t;
+  41:../../common/keyboard.h **** 
+  42:../../common/keyboard.h **** /* equivalent test of keypos_t */
+  43:../../common/keyboard.h **** #define KEYEQ(keya, keyb)       ((keya).row == (keyb).row && (keya).col == (keyb).col)
+  44:../../common/keyboard.h **** 
+  45:../../common/keyboard.h **** /* Rules for No Event:
+  46:../../common/keyboard.h ****  * 1) (time == 0) to handle (keyevent_t){} as empty event
+  47:../../common/keyboard.h ****  * 2) Matrix(255, 255) to make TICK event available
+  48:../../common/keyboard.h ****  */
+  49:../../common/keyboard.h **** static inline bool IS_NOEVENT(keyevent_t event) { return event.time == 0 || (event.key.row == 255 &
+  50:../../common/keyboard.h **** static inline bool IS_PRESSED(keyevent_t event) { return (!IS_NOEVENT(event) && event.pressed); }
+  51:../../common/keyboard.h **** static inline bool IS_RELEASED(keyevent_t event) { return (!IS_NOEVENT(event) && !event.pressed); }
+  52:../../common/keyboard.h **** 
+  53:../../common/keyboard.h **** /* Tick event */
+  54:../../common/keyboard.h **** #define TICK                    (keyevent_t){           \
+  55:../../common/keyboard.h ****     .key = (keypos_t){ .row = 255, .col = 255 },           \
+  56:../../common/keyboard.h ****     .pressed = false,                                   \
+  57:../../common/keyboard.h ****     .time = (timer_read() | 1)                          \
+  58:../../common/keyboard.h **** }
+  59:../../common/keyboard.h **** 
+  60:../../common/keyboard.h **** 
+  61:../../common/keyboard.h **** void keyboard_init(void);
+  62:../../common/keyboard.h **** void keyboard_task(void);
+  63:../../common/keyboard.h **** void keyboard_set_leds(uint8_t leds);
+  64:../../common/keyboard.h **** 
+  65:../../common/keyboard.h **** __attribute__ ((weak)) void matrix_power_up(void) {}
+  38               		.loc 2 65 0
+  39               		.cfi_startproc
+  40               	/* prologue: function */
+  41               	/* frame size = 0 */
+  42               	/* stack size = 0 */
+  43               	.L__stack_usage = 0
+  44 0000 0895      		ret
+  45               		.cfi_endproc
+  46               	.LFE4:
+  48               		.section	.text.matrix_power_down,"ax",@progbits
+  49               		.weak	matrix_power_down
+  51               	matrix_power_down:
+  52               	.LFB5:
+  66:../../common/keyboard.h **** __attribute__ ((weak)) void matrix_power_down(void) {}
+  53               		.loc 2 66 0
+  54               		.cfi_startproc
+  55               	/* prologue: function */
+  56               	/* frame size = 0 */
+  57               	/* stack size = 0 */
+  58               	.L__stack_usage = 0
+  59 0000 0895      		ret
+  60               		.cfi_endproc
+  61               	.LFE5:
+  63               		.section	.text.usb_init,"ax",@progbits
+  64               	.global	usb_init
+  66               	usb_init:
+  67               	.LFB6:
+ 609:../../protocol/pjrc/usb.c **** 	HW_CONFIG();
+  68               		.loc 1 609 0
+  69               		.cfi_startproc
+  70               	/* prologue: function */
+  71               	/* frame size = 0 */
+  72               	/* stack size = 0 */
+  73               	.L__stack_usage = 0
+ 610:../../protocol/pjrc/usb.c **** 	USB_FREEZE();				// enable USB
+  74               		.loc 1 610 0
+  75 0000 81E0      		ldi r24,lo8(1)
+  76 0002 8093 D700 		sts 215,r24
+ 611:../../protocol/pjrc/usb.c **** 	PLL_CONFIG();				// config PLL
+  77               		.loc 1 611 0
+  78 0006 80EA      		ldi r24,lo8(-96)
+  79 0008 8093 D800 		sts 216,r24
+ 612:../../protocol/pjrc/usb.c ****         while (!(PLLCSR & (1<<PLOCK))) ;	// wait for PLL lock
+  80               		.loc 1 612 0
+  81 000c 82E1      		ldi r24,lo8(18)
+  82 000e 89BD      		out 0x29,r24
+  83               	.L9:
+ 613:../../protocol/pjrc/usb.c ****         USB_CONFIG();				// start USB clock
+  84               		.loc 1 613 0 discriminator 1
+  85 0010 09B4      		in __tmp_reg__,0x29
+  86 0012 00FE      		sbrs __tmp_reg__,0
+  87 0014 00C0      		rjmp .L9
+ 614:../../protocol/pjrc/usb.c ****         UDCON = 0;				// enable attach resistor
+  88               		.loc 1 614 0
+  89 0016 80E9      		ldi r24,lo8(-112)
+  90 0018 8093 D800 		sts 216,r24
+ 615:../../protocol/pjrc/usb.c **** 	usb_configuration = 0;
+  91               		.loc 1 615 0
+  92 001c 1092 E000 		sts 224,__zero_reg__
+ 616:../../protocol/pjrc/usb.c ****         suspend = false;
+  93               		.loc 1 616 0
+  94 0020 1092 0000 		sts usb_configuration,__zero_reg__
+ 617:../../protocol/pjrc/usb.c ****         UDIEN = (1<<EORSTE)|(1<<SOFE)|(1<<SUSPE)|(1<<WAKEUPE);
+  95               		.loc 1 617 0
+  96 0024 1092 0000 		sts suspend,__zero_reg__
+ 618:../../protocol/pjrc/usb.c **** 	sei();
+  97               		.loc 1 618 0
+  98 0028 8DE1      		ldi r24,lo8(29)
+  99 002a 8093 E200 		sts 226,r24
+ 619:../../protocol/pjrc/usb.c **** }
+ 100               		.loc 1 619 0
+ 101               	/* #APP */
+ 102               	 ;  619 "../../protocol/pjrc/usb.c" 1
+ 103 002e 7894      		sei
+ 104               	 ;  0 "" 2
+ 105               	/* #NOAPP */
+ 106 0030 0895      		ret
+ 107               		.cfi_endproc
+ 108               	.LFE6:
+ 110               		.section	.text.usb_configured,"ax",@progbits
+ 111               	.global	usb_configured
+ 113               	usb_configured:
+ 114               	.LFB7:
+ 625:../../protocol/pjrc/usb.c **** 	return usb_configuration && !suspend;
+ 115               		.loc 1 625 0
+ 116               		.cfi_startproc
+ 117               	/* prologue: function */
+ 118               	/* frame size = 0 */
+ 119               	/* stack size = 0 */
+ 120               	.L__stack_usage = 0
+ 626:../../protocol/pjrc/usb.c **** }
+ 121               		.loc 1 626 0
+ 122 0000 8091 0000 		lds r24,usb_configuration
+ 123 0004 8823      		tst r24
+ 124 0006 01F0      		breq .L12
+ 626:../../protocol/pjrc/usb.c **** }
+ 125               		.loc 1 626 0 is_stmt 0 discriminator 1
+ 126 0008 8091 0000 		lds r24,suspend
+ 127 000c 91E0      		ldi r25,lo8(1)
+ 128 000e 8927      		eor r24,r25
+ 129 0010 0895      		ret
+ 130               	.L12:
+ 626:../../protocol/pjrc/usb.c **** }
+ 131               		.loc 1 626 0
+ 132 0012 80E0      		ldi r24,0
+ 627:../../protocol/pjrc/usb.c **** 
+ 133               		.loc 1 627 0 is_stmt 1
+ 134 0014 0895      		ret
+ 135               		.cfi_endproc
+ 136               	.LFE7:
+ 138               		.section	.text.usb_remote_wakeup,"ax",@progbits
+ 139               	.global	usb_remote_wakeup
+ 141               	usb_remote_wakeup:
+ 142               	.LFB8:
+ 630:../../protocol/pjrc/usb.c ****     UDCON |= (1<<RMWKUP);
+ 143               		.loc 1 630 0
+ 144               		.cfi_startproc
+ 145               	/* prologue: function */
+ 146               	/* frame size = 0 */
+ 147               	/* stack size = 0 */
+ 148               	.L__stack_usage = 0
+ 631:../../protocol/pjrc/usb.c ****     while (UDCON & (1<<RMWKUP));
+ 149               		.loc 1 631 0
+ 150 0000 8091 E000 		lds r24,224
+ 151 0004 8260      		ori r24,lo8(2)
+ 152 0006 8093 E000 		sts 224,r24
+ 153               	.L15:
+ 632:../../protocol/pjrc/usb.c **** }
+ 154               		.loc 1 632 0 discriminator 1
+ 155 000a 8091 E000 		lds r24,224
+ 156 000e 81FD      		sbrc r24,1
+ 157 0010 00C0      		rjmp .L15
+ 158               	/* epilogue start */
+ 633:../../protocol/pjrc/usb.c **** 
+ 159               		.loc 1 633 0
+ 160 0012 0895      		ret
+ 161               		.cfi_endproc
+ 162               	.LFE8:
+ 164               		.section	.text.__vector_10,"ax",@progbits
+ 165               	.global	__vector_10
+ 167               	__vector_10:
+ 168               	.LFB9:
+ 649:../../protocol/pjrc/usb.c **** 	uint8_t intbits, t;
+ 169               		.loc 1 649 0
+ 170               		.cfi_startproc
+ 171 0000 1F92      		push r1
+ 172               	.LCFI0:
+ 173               		.cfi_def_cfa_offset 3
+ 174               		.cfi_offset 1, -2
+ 175 0002 0F92      		push r0
+ 176               	.LCFI1:
+ 177               		.cfi_def_cfa_offset 4
+ 178               		.cfi_offset 0, -3
+ 179 0004 0FB6      		in r0,__SREG__
+ 180 0006 0F92      		push r0
+ 181 0008 1124      		clr __zero_reg__
+ 182 000a 2F93      		push r18
+ 183               	.LCFI2:
+ 184               		.cfi_def_cfa_offset 5
+ 185               		.cfi_offset 18, -4
+ 186 000c 3F93      		push r19
+ 187               	.LCFI3:
+ 188               		.cfi_def_cfa_offset 6
+ 189               		.cfi_offset 19, -5
+ 190 000e 4F93      		push r20
+ 191               	.LCFI4:
+ 192               		.cfi_def_cfa_offset 7
+ 193               		.cfi_offset 20, -6
+ 194 0010 5F93      		push r21
+ 195               	.LCFI5:
+ 196               		.cfi_def_cfa_offset 8
+ 197               		.cfi_offset 21, -7
+ 198 0012 6F93      		push r22
+ 199               	.LCFI6:
+ 200               		.cfi_def_cfa_offset 9
+ 201               		.cfi_offset 22, -8
+ 202 0014 7F93      		push r23
+ 203               	.LCFI7:
+ 204               		.cfi_def_cfa_offset 10
+ 205               		.cfi_offset 23, -9
+ 206 0016 8F93      		push r24
+ 207               	.LCFI8:
+ 208               		.cfi_def_cfa_offset 11
+ 209               		.cfi_offset 24, -10
+ 210 0018 9F93      		push r25
+ 211               	.LCFI9:
+ 212               		.cfi_def_cfa_offset 12
+ 213               		.cfi_offset 25, -11
+ 214 001a AF93      		push r26
+ 215               	.LCFI10:
+ 216               		.cfi_def_cfa_offset 13
+ 217               		.cfi_offset 26, -12
+ 218 001c BF93      		push r27
+ 219               	.LCFI11:
+ 220               		.cfi_def_cfa_offset 14
+ 221               		.cfi_offset 27, -13
+ 222 001e CF93      		push r28
+ 223               	.LCFI12:
+ 224               		.cfi_def_cfa_offset 15
+ 225               		.cfi_offset 28, -14
+ 226 0020 EF93      		push r30
+ 227               	.LCFI13:
+ 228               		.cfi_def_cfa_offset 16
+ 229               		.cfi_offset 30, -15
+ 230 0022 FF93      		push r31
+ 231               	.LCFI14:
+ 232               		.cfi_def_cfa_offset 17
+ 233               		.cfi_offset 31, -16
+ 234               	/* prologue: Signal */
+ 235               	/* frame size = 0 */
+ 236               	/* stack size = 16 */
+ 237               	.L__stack_usage = 16
+ 653:../../protocol/pjrc/usb.c ****         UDINT = 0;
+ 238               		.loc 1 653 0
+ 239 0024 C091 E100 		lds r28,225
+ 240               	.LVL0:
+ 654:../../protocol/pjrc/usb.c ****         if ((intbits & (1<<SUSPI)) && (UDIEN & (1<<SUSPE)) && usb_configuration) {
+ 241               		.loc 1 654 0
+ 242 0028 1092 E100 		sts 225,__zero_reg__
+ 655:../../protocol/pjrc/usb.c **** #ifdef SLEEP_LED_ENABLE
+ 243               		.loc 1 655 0
+ 244 002c C0FF      		sbrs r28,0
+ 245 002e 00C0      		rjmp .L17
+ 655:../../protocol/pjrc/usb.c **** #ifdef SLEEP_LED_ENABLE
+ 246               		.loc 1 655 0 is_stmt 0 discriminator 1
+ 247 0030 8091 E200 		lds r24,226
+ 248 0034 80FF      		sbrs r24,0
+ 249 0036 00C0      		rjmp .L17
+ 250 0038 8091 0000 		lds r24,usb_configuration
+ 251 003c 8823      		tst r24
+ 252 003e 01F0      		breq .L17
+ 657:../../protocol/pjrc/usb.c **** #endif
+ 253               		.loc 1 657 0 is_stmt 1
+ 254 0040 0E94 0000 		call sleep_led_enable
+ 255               	.LVL1:
+ 659:../../protocol/pjrc/usb.c ****             UDIEN |= (1<<WAKEUPE);
+ 256               		.loc 1 659 0
+ 257 0044 8091 E200 		lds r24,226
+ 258 0048 8E7F      		andi r24,lo8(-2)
+ 259 004a 8093 E200 		sts 226,r24
+ 660:../../protocol/pjrc/usb.c ****             suspend = true;
+ 260               		.loc 1 660 0
+ 261 004e 8091 E200 		lds r24,226
+ 262 0052 8061      		ori r24,lo8(16)
+ 263 0054 8093 E200 		sts 226,r24
+ 661:../../protocol/pjrc/usb.c ****         }
+ 264               		.loc 1 661 0
+ 265 0058 81E0      		ldi r24,lo8(1)
+ 266 005a 8093 0000 		sts suspend,r24
+ 267               	.L17:
+ 663:../../protocol/pjrc/usb.c ****             suspend_wakeup_init();
+ 268               		.loc 1 663 0
+ 269 005e C4FF      		sbrs r28,4
+ 270 0060 00C0      		rjmp .L18
+ 663:../../protocol/pjrc/usb.c ****             suspend_wakeup_init();
+ 271               		.loc 1 663 0 is_stmt 0 discriminator 1
+ 272 0062 8091 E200 		lds r24,226
+ 273 0066 84FF      		sbrs r24,4
+ 274 0068 00C0      		rjmp .L18
+ 275 006a 8091 0000 		lds r24,usb_configuration
+ 276 006e 8823      		tst r24
+ 277 0070 01F0      		breq .L18
+ 664:../../protocol/pjrc/usb.c **** #ifdef SLEEP_LED_ENABLE
+ 278               		.loc 1 664 0 is_stmt 1
+ 279 0072 0E94 0000 		call suspend_wakeup_init
+ 280               	.LVL2:
+ 666:../../protocol/pjrc/usb.c ****             // NOTE: converters may not accept this
+ 281               		.loc 1 666 0
+ 282 0076 0E94 0000 		call sleep_led_disable
+ 283               	.LVL3:
+ 668:../../protocol/pjrc/usb.c **** #endif
+ 284               		.loc 1 668 0
+ 285 007a 0E94 0000 		call host_keyboard_leds
+ 286               	.LVL4:
+ 287 007e 0E94 0000 		call led_set
+ 288               	.LVL5:
+ 671:../../protocol/pjrc/usb.c ****             UDIEN &= ~(1<<WAKEUPE);
+ 289               		.loc 1 671 0
+ 290 0082 8091 E200 		lds r24,226
+ 291 0086 8160      		ori r24,lo8(1)
+ 292 0088 8093 E200 		sts 226,r24
+ 672:../../protocol/pjrc/usb.c ****             suspend = false;
+ 293               		.loc 1 672 0
+ 294 008c 8091 E200 		lds r24,226
+ 295 0090 8F7E      		andi r24,lo8(-17)
+ 296 0092 8093 E200 		sts 226,r24
+ 673:../../protocol/pjrc/usb.c ****         }
+ 297               		.loc 1 673 0
+ 298 0096 1092 0000 		sts suspend,__zero_reg__
+ 299               	.L18:
+ 675:../../protocol/pjrc/usb.c **** 		UENUM = 0;
+ 300               		.loc 1 675 0
+ 301 009a C3FF      		sbrs r28,3
+ 302 009c 00C0      		rjmp .L19
+ 676:../../protocol/pjrc/usb.c **** 		UECONX = 1;
+ 303               		.loc 1 676 0
+ 304 009e 1092 E900 		sts 233,__zero_reg__
+ 677:../../protocol/pjrc/usb.c **** 		UECFG0X = EP_TYPE_CONTROL;
+ 305               		.loc 1 677 0
+ 306 00a2 81E0      		ldi r24,lo8(1)
+ 307 00a4 8093 EB00 		sts 235,r24
+ 678:../../protocol/pjrc/usb.c **** 		UECFG1X = EP_SIZE(ENDPOINT0_SIZE) | EP_SINGLE_BUFFER;
+ 308               		.loc 1 678 0
+ 309 00a8 1092 EC00 		sts 236,__zero_reg__
+ 679:../../protocol/pjrc/usb.c **** 		UEIENX = (1<<RXSTPE);
+ 310               		.loc 1 679 0
+ 311 00ac 82E2      		ldi r24,lo8(34)
+ 312 00ae 8093 ED00 		sts 237,r24
+ 680:../../protocol/pjrc/usb.c **** 		usb_configuration = 0;
+ 313               		.loc 1 680 0
+ 314 00b2 88E0      		ldi r24,lo8(8)
+ 315 00b4 8093 F000 		sts 240,r24
+ 681:../../protocol/pjrc/usb.c ****         }
+ 316               		.loc 1 681 0
+ 317 00b8 1092 0000 		sts usb_configuration,__zero_reg__
+ 318               	.L19:
+ 683:../../protocol/pjrc/usb.c **** 		t = debug_flush_timer;
+ 319               		.loc 1 683 0
+ 320 00bc C2FF      		sbrs r28,2
+ 321 00be 00C0      		rjmp .L16
+ 683:../../protocol/pjrc/usb.c **** 		t = debug_flush_timer;
+ 322               		.loc 1 683 0 is_stmt 0 discriminator 1
+ 323 00c0 8091 0000 		lds r24,usb_configuration
+ 324 00c4 8823      		tst r24
+ 325 00c6 01F0      		breq .L16
+ 684:../../protocol/pjrc/usb.c **** 		if (t) {
+ 326               		.loc 1 684 0 is_stmt 1
+ 327 00c8 8091 0000 		lds r24,debug_flush_timer
+ 328               	.LVL6:
+ 685:../../protocol/pjrc/usb.c **** 			debug_flush_timer = -- t;
+ 329               		.loc 1 685 0
+ 330 00cc 8823      		tst r24
+ 331 00ce 01F0      		breq .L24
+ 686:../../protocol/pjrc/usb.c **** 			if (!t) {
+ 332               		.loc 1 686 0
+ 333 00d0 8150      		subi r24,lo8(-(-1))
+ 334               	.LVL7:
+ 335 00d2 8093 0000 		sts debug_flush_timer,r24
+ 687:../../protocol/pjrc/usb.c **** 				UENUM = DEBUG_TX_ENDPOINT;
+ 336               		.loc 1 687 0
+ 337 00d6 8111      		cpse r24,__zero_reg__
+ 338 00d8 00C0      		rjmp .L24
+ 688:../../protocol/pjrc/usb.c **** 				while ((UEINTX & (1<<RWAL))) {
+ 339               		.loc 1 688 0
+ 340 00da 83E0      		ldi r24,lo8(3)
+ 341               	.LVL8:
+ 342 00dc 8093 E900 		sts 233,r24
+ 343               	.LVL9:
+ 344               	.L26:
+ 689:../../protocol/pjrc/usb.c **** 					UEDATX = 0;
+ 345               		.loc 1 689 0 discriminator 1
+ 346 00e0 8091 E800 		lds r24,232
+ 347 00e4 85FF      		sbrs r24,5
+ 348 00e6 00C0      		rjmp .L58
+ 690:../../protocol/pjrc/usb.c **** 				}
+ 349               		.loc 1 690 0
+ 350 00e8 1092 F100 		sts 241,__zero_reg__
+ 351 00ec 00C0      		rjmp .L26
+ 352               	.L58:
+ 692:../../protocol/pjrc/usb.c **** 			}
+ 353               		.loc 1 692 0
+ 354 00ee 8AE3      		ldi r24,lo8(58)
+ 355 00f0 8093 E800 		sts 232,r24
+ 356               	.L24:
+ 697:../../protocol/pjrc/usb.c **** #else
+ 357               		.loc 1 697 0
+ 358 00f4 8091 0000 		lds r24,keyboard_nkro
+ 359 00f8 8111      		cpse r24,__zero_reg__
+ 360 00fa 00C0      		rjmp .L16
+ 697:../../protocol/pjrc/usb.c **** #else
+ 361               		.loc 1 697 0 is_stmt 0 discriminator 1
+ 362 00fc 8091 0000 		lds r24,keyboard_idle
+ 363 0100 8823      		tst r24
+ 364 0102 01F0      		breq .L16
+ 365 0104 8091 0000 		lds r24,div4.2333
+ 366 0108 8F5F      		subi r24,lo8(-(1))
+ 367 010a 8093 0000 		sts div4.2333,r24
+ 368 010e 8370      		andi r24,lo8(3)
+ 369 0110 01F4      		brne .L16
+ 701:../../protocol/pjrc/usb.c **** 			if (UEINTX & (1<<RWAL)) {
+ 370               		.loc 1 701 0 is_stmt 1
+ 371 0112 81E0      		ldi r24,lo8(1)
+ 372 0114 8093 E900 		sts 233,r24
+ 702:../../protocol/pjrc/usb.c **** 				usb_keyboard_idle_count++;
+ 373               		.loc 1 702 0
+ 374 0118 8091 E800 		lds r24,232
+ 375 011c 85FF      		sbrs r24,5
+ 376 011e 00C0      		rjmp .L16
+ 703:../../protocol/pjrc/usb.c **** 				if (usb_keyboard_idle_count == keyboard_idle) {
+ 377               		.loc 1 703 0
+ 378 0120 8091 0000 		lds r24,usb_keyboard_idle_count
+ 379 0124 8F5F      		subi r24,lo8(-(1))
+ 380 0126 8093 0000 		sts usb_keyboard_idle_count,r24
+ 704:../../protocol/pjrc/usb.c **** 					usb_keyboard_idle_count = 0;
+ 381               		.loc 1 704 0
+ 382 012a 9091 0000 		lds r25,keyboard_idle
+ 383 012e 8913      		cpse r24,r25
+ 384 0130 00C0      		rjmp .L16
+ 705:../../protocol/pjrc/usb.c ****                                         /* TODO: fix keyboard_report inconsistency */
+ 385               		.loc 1 705 0
+ 386 0132 1092 0000 		sts usb_keyboard_idle_count,__zero_reg__
+ 387               	.L16:
+ 388               	/* epilogue start */
+ 720:../../protocol/pjrc/usb.c **** 
+ 389               		.loc 1 720 0
+ 390 0136 FF91      		pop r31
+ 391 0138 EF91      		pop r30
+ 392 013a CF91      		pop r28
+ 393               	.LVL10:
+ 394 013c BF91      		pop r27
+ 395 013e AF91      		pop r26
+ 396 0140 9F91      		pop r25
+ 397 0142 8F91      		pop r24
+ 398 0144 7F91      		pop r23
+ 399 0146 6F91      		pop r22
+ 400 0148 5F91      		pop r21
+ 401 014a 4F91      		pop r20
+ 402 014c 3F91      		pop r19
+ 403 014e 2F91      		pop r18
+ 404 0150 0F90      		pop r0
+ 405 0152 0FBE      		out __SREG__,r0
+ 406 0154 0F90      		pop r0
+ 407 0156 1F90      		pop r1
+ 408 0158 1895      		reti
+ 409               		.cfi_endproc
+ 410               	.LFE9:
+ 412               		.section	.text.__vector_11,"ax",@progbits
+ 413               	.global	__vector_11
+ 415               	__vector_11:
+ 416               	.LFB14:
+ 729:../../protocol/pjrc/usb.c **** static inline void usb_send_in(void)
+ 730:../../protocol/pjrc/usb.c **** {
+ 731:../../protocol/pjrc/usb.c **** 	UEINTX = ~(1<<TXINI);
+ 732:../../protocol/pjrc/usb.c **** }
+ 733:../../protocol/pjrc/usb.c **** static inline void usb_wait_receive_out(void)
+ 734:../../protocol/pjrc/usb.c **** {
+ 735:../../protocol/pjrc/usb.c **** 	while (!(UEINTX & (1<<RXOUTI))) ;
+ 736:../../protocol/pjrc/usb.c **** }
+ 737:../../protocol/pjrc/usb.c **** static inline void usb_ack_out(void)
+ 738:../../protocol/pjrc/usb.c **** {
+ 739:../../protocol/pjrc/usb.c **** 	UEINTX = ~(1<<RXOUTI);
+ 740:../../protocol/pjrc/usb.c **** }
+ 741:../../protocol/pjrc/usb.c **** 
+ 742:../../protocol/pjrc/usb.c **** 
+ 743:../../protocol/pjrc/usb.c **** 
+ 744:../../protocol/pjrc/usb.c **** // USB Endpoint Interrupt - endpoint 0 is handled here.  The
+ 745:../../protocol/pjrc/usb.c **** // other endpoints are manipulated by the user-callable
+ 746:../../protocol/pjrc/usb.c **** // functions, and the start-of-frame interrupt.
+ 747:../../protocol/pjrc/usb.c **** //
+ 748:../../protocol/pjrc/usb.c **** ISR(USB_COM_vect)
+ 749:../../protocol/pjrc/usb.c **** {
+ 417               		.loc 1 749 0
+ 418               		.cfi_startproc
+ 419 0000 1F92      		push r1
+ 420               	.LCFI15:
+ 421               		.cfi_def_cfa_offset 3
+ 422               		.cfi_offset 1, -2
+ 423 0002 0F92      		push r0
+ 424               	.LCFI16:
+ 425               		.cfi_def_cfa_offset 4
+ 426               		.cfi_offset 0, -3
+ 427 0004 0FB6      		in r0,__SREG__
+ 428 0006 0F92      		push r0
+ 429 0008 1124      		clr __zero_reg__
+ 430 000a EF92      		push r14
+ 431               	.LCFI17:
+ 432               		.cfi_def_cfa_offset 5
+ 433               		.cfi_offset 14, -4
+ 434 000c FF92      		push r15
+ 435               	.LCFI18:
+ 436               		.cfi_def_cfa_offset 6
+ 437               		.cfi_offset 15, -5
+ 438 000e 0F93      		push r16
+ 439               	.LCFI19:
+ 440               		.cfi_def_cfa_offset 7
+ 441               		.cfi_offset 16, -6
+ 442 0010 1F93      		push r17
+ 443               	.LCFI20:
+ 444               		.cfi_def_cfa_offset 8
+ 445               		.cfi_offset 17, -7
+ 446 0012 2F93      		push r18
+ 447               	.LCFI21:
+ 448               		.cfi_def_cfa_offset 9
+ 449               		.cfi_offset 18, -8
+ 450 0014 3F93      		push r19
+ 451               	.LCFI22:
+ 452               		.cfi_def_cfa_offset 10
+ 453               		.cfi_offset 19, -9
+ 454 0016 4F93      		push r20
+ 455               	.LCFI23:
+ 456               		.cfi_def_cfa_offset 11
+ 457               		.cfi_offset 20, -10
+ 458 0018 5F93      		push r21
+ 459               	.LCFI24:
+ 460               		.cfi_def_cfa_offset 12
+ 461               		.cfi_offset 21, -11
+ 462 001a 6F93      		push r22
+ 463               	.LCFI25:
+ 464               		.cfi_def_cfa_offset 13
+ 465               		.cfi_offset 22, -12
+ 466 001c 7F93      		push r23
+ 467               	.LCFI26:
+ 468               		.cfi_def_cfa_offset 14
+ 469               		.cfi_offset 23, -13
+ 470 001e 8F93      		push r24
+ 471               	.LCFI27:
+ 472               		.cfi_def_cfa_offset 15
+ 473               		.cfi_offset 24, -14
+ 474 0020 9F93      		push r25
+ 475               	.LCFI28:
+ 476               		.cfi_def_cfa_offset 16
+ 477               		.cfi_offset 25, -15
+ 478 0022 AF93      		push r26
+ 479               	.LCFI29:
+ 480               		.cfi_def_cfa_offset 17
+ 481               		.cfi_offset 26, -16
+ 482 0024 BF93      		push r27
+ 483               	.LCFI30:
+ 484               		.cfi_def_cfa_offset 18
+ 485               		.cfi_offset 27, -17
+ 486 0026 EF93      		push r30
+ 487               	.LCFI31:
+ 488               		.cfi_def_cfa_offset 19
+ 489               		.cfi_offset 30, -18
+ 490 0028 FF93      		push r31
+ 491               	.LCFI32:
+ 492               		.cfi_def_cfa_offset 20
+ 493               		.cfi_offset 31, -19
+ 494 002a CF93      		push r28
+ 495               	.LCFI33:
+ 496               		.cfi_def_cfa_offset 21
+ 497               		.cfi_offset 28, -20
+ 498 002c DF93      		push r29
+ 499               	.LCFI34:
+ 500               		.cfi_def_cfa_offset 22
+ 501               		.cfi_offset 29, -21
+ 502 002e 1F92      		push __zero_reg__
+ 503               	.LCFI35:
+ 504               		.cfi_def_cfa_offset 23
+ 505 0030 CDB7      		in r28,__SP_L__
+ 506 0032 DEB7      		in r29,__SP_H__
+ 507               	.LCFI36:
+ 508               		.cfi_def_cfa_register 28
+ 509               	/* prologue: Signal */
+ 510               	/* frame size = 1 */
+ 511               	/* stack size = 22 */
+ 512               	.L__stack_usage = 22
+ 750:../../protocol/pjrc/usb.c ****         uint8_t intbits;
+ 751:../../protocol/pjrc/usb.c **** 	const uint8_t *list;
+ 752:../../protocol/pjrc/usb.c ****         const uint8_t *cfg;
+ 753:../../protocol/pjrc/usb.c **** 	uint8_t i, n, len, en;
+ 754:../../protocol/pjrc/usb.c **** 	uint8_t bmRequestType;
+ 755:../../protocol/pjrc/usb.c **** 	uint8_t bRequest;
+ 756:../../protocol/pjrc/usb.c **** 	uint16_t wValue;
+ 757:../../protocol/pjrc/usb.c **** 	uint16_t wIndex;
+ 758:../../protocol/pjrc/usb.c **** 	uint16_t wLength;
+ 759:../../protocol/pjrc/usb.c **** 	uint16_t desc_val;
+ 760:../../protocol/pjrc/usb.c **** 	const uint8_t *desc_addr;
+ 761:../../protocol/pjrc/usb.c **** 	uint8_t	desc_length;
+ 762:../../protocol/pjrc/usb.c **** 
+ 763:../../protocol/pjrc/usb.c ****         UENUM = 0;
+ 513               		.loc 1 763 0
+ 514 0034 1092 E900 		sts 233,__zero_reg__
+ 764:../../protocol/pjrc/usb.c **** 	intbits = UEINTX;
+ 515               		.loc 1 764 0
+ 516 0038 8091 E800 		lds r24,232
+ 517               	.LVL11:
+ 765:../../protocol/pjrc/usb.c ****         if (intbits & (1<<RXSTPI)) {
+ 518               		.loc 1 765 0
+ 519 003c 83FF      		sbrs r24,3
+ 520 003e 00C0      		rjmp .L60
+ 766:../../protocol/pjrc/usb.c ****                 bmRequestType = UEDATX;
+ 521               		.loc 1 766 0
+ 522 0040 9091 F100 		lds r25,241
+ 523               	.LVL12:
+ 767:../../protocol/pjrc/usb.c ****                 bRequest = UEDATX;
+ 524               		.loc 1 767 0
+ 525 0044 8091 F100 		lds r24,241
+ 526               	.LVL13:
+ 768:../../protocol/pjrc/usb.c ****                 wValue = UEDATX;
+ 527               		.loc 1 768 0
+ 528 0048 3091 F100 		lds r19,241
+ 529               	.LVL14:
+ 769:../../protocol/pjrc/usb.c ****                 wValue |= (UEDATX << 8);
+ 530               		.loc 1 769 0
+ 531 004c 2091 F100 		lds r18,241
+ 532 0050 E32E      		mov r14,r19
+ 533 0052 F12C      		mov r15,__zero_reg__
+ 534 0054 F22A      		or r15,r18
+ 535               	.LVL15:
+ 770:../../protocol/pjrc/usb.c ****                 wIndex = UEDATX;
+ 536               		.loc 1 770 0
+ 537 0056 0091 F100 		lds r16,241
+ 538               	.LVL16:
+ 771:../../protocol/pjrc/usb.c ****                 wIndex |= (UEDATX << 8);
+ 539               		.loc 1 771 0
+ 540 005a 2091 F100 		lds r18,241
+ 541 005e 10E0      		ldi r17,0
+ 542 0060 122B      		or r17,r18
+ 543               	.LVL17:
+ 772:../../protocol/pjrc/usb.c ****                 wLength = UEDATX;
+ 544               		.loc 1 772 0
+ 545 0062 2091 F100 		lds r18,241
+ 546               	.LVL18:
+ 773:../../protocol/pjrc/usb.c ****                 wLength |= (UEDATX << 8);
+ 547               		.loc 1 773 0
+ 548 0066 4091 F100 		lds r20,241
+ 549 006a 30E0      		ldi r19,0
+ 550 006c 342B      		or r19,r20
+ 551               	.LVL19:
+ 774:../../protocol/pjrc/usb.c ****                 UEINTX = ~((1<<RXSTPI) | (1<<RXOUTI) | (1<<TXINI));
+ 552               		.loc 1 774 0
+ 553 006e 42EF      		ldi r20,lo8(-14)
+ 554               	.LVL20:
+ 555 0070 4093 E800 		sts 232,r20
+ 775:../../protocol/pjrc/usb.c ****                 if (bRequest == GET_DESCRIPTOR) {
+ 556               		.loc 1 775 0
+ 557 0074 8630      		cpi r24,lo8(6)
+ 558 0076 01F0      		breq .+2
+ 559 0078 00C0      		rjmp .L130
+ 560 007a 6FE0      		ldi r22,lo8(15)
+ 561 007c 80E0      		ldi r24,lo8(descriptor_list)
+ 562 007e 90E0      		ldi r25,hi8(descriptor_list)
+ 563               	.LVL21:
+ 564               	.L71:
+ 565               	.LBB96:
+ 776:../../protocol/pjrc/usb.c **** 			list = (const uint8_t *)descriptor_list;
+ 777:../../protocol/pjrc/usb.c **** 			for (i=0; ; i++) {
+ 778:../../protocol/pjrc/usb.c **** 				if (i >= NUM_DESC_LIST) {
+ 779:../../protocol/pjrc/usb.c **** 					UECONX = (1<<STALLRQ)|(1<<EPEN);  //stall
+ 780:../../protocol/pjrc/usb.c **** 					return;
+ 781:../../protocol/pjrc/usb.c **** 				}
+ 782:../../protocol/pjrc/usb.c **** 				desc_val = pgm_read_word(list);
+ 566               		.loc 1 782 0
+ 567 0080 FC01      		movw r30,r24
+ 568               	/* #APP */
+ 569               	 ;  782 "../../protocol/pjrc/usb.c" 1
+ 570 0082 4591      		lpm r20, Z+
+ 571 0084 5491      		lpm r21, Z
+ 572               		
+ 573               	 ;  0 "" 2
+ 574               	.LVL22:
+ 575               	/* #NOAPP */
+ 576               	.LBE96:
+ 783:../../protocol/pjrc/usb.c **** 				if (desc_val != wValue) {
+ 577               		.loc 1 783 0
+ 578 0086 4E15      		cp r20,r14
+ 579 0088 5F05      		cpc r21,r15
+ 580 008a 01F4      		brne .L131
+ 581               	.LVL23:
+ 784:../../protocol/pjrc/usb.c **** 					list += sizeof(struct descriptor_list_struct);
+ 785:../../protocol/pjrc/usb.c **** 					continue;
+ 786:../../protocol/pjrc/usb.c **** 				}
+ 787:../../protocol/pjrc/usb.c **** 				list += 2;
+ 582               		.loc 1 787 0
+ 583 008c FC01      		movw r30,r24
+ 584 008e 3296      		adiw r30,2
+ 585               	.LVL24:
+ 586               	.LBB97:
+ 788:../../protocol/pjrc/usb.c **** 				desc_val = pgm_read_word(list);
+ 587               		.loc 1 788 0
+ 588               	/* #APP */
+ 589               	 ;  788 "../../protocol/pjrc/usb.c" 1
+ 590 0090 4591      		lpm r20, Z+
+ 591 0092 5491      		lpm r21, Z
+ 592               		
+ 593               	 ;  0 "" 2
+ 594               	.LVL25:
+ 595               	/* #NOAPP */
+ 596               	.LBE97:
+ 789:../../protocol/pjrc/usb.c **** 				if (desc_val != wIndex) {
+ 597               		.loc 1 789 0
+ 598 0094 4017      		cp r20,r16
+ 599 0096 5107      		cpc r21,r17
+ 600 0098 01F0      		breq .L66
+ 601               	.LVL26:
+ 602               	.L131:
+ 790:../../protocol/pjrc/usb.c **** 					list += sizeof(struct descriptor_list_struct)-2;
+ 603               		.loc 1 790 0
+ 604 009a 0796      		adiw r24,7
+ 605               	.LVL27:
+ 606 009c 6150      		subi r22,lo8(-(-1))
+ 607               	.LVL28:
+ 778:../../protocol/pjrc/usb.c **** 					UECONX = (1<<STALLRQ)|(1<<EPEN);  //stall
+ 608               		.loc 1 778 0
+ 609 009e 01F4      		brne .L71
+ 610 00a0 00C0      		rjmp .L60
+ 611               	.LVL29:
+ 612               	.L66:
+ 791:../../protocol/pjrc/usb.c **** 					continue;
+ 792:../../protocol/pjrc/usb.c **** 				}
+ 793:../../protocol/pjrc/usb.c **** 				list += 2;
+ 613               		.loc 1 793 0
+ 614 00a2 FC01      		movw r30,r24
+ 615 00a4 3496      		adiw r30,4
+ 616               	.LVL30:
+ 794:../../protocol/pjrc/usb.c **** 				desc_addr = (const uint8_t *)pgm_read_word(list);
+ 617               		.loc 1 794 0
+ 618               	/* #APP */
+ 619               	 ;  794 "../../protocol/pjrc/usb.c" 1
+ 620 00a6 4591      		lpm r20, Z+
+ 621 00a8 5491      		lpm r21, Z
+ 622               		
+ 623               	 ;  0 "" 2
+ 624               	.LVL31:
+ 795:../../protocol/pjrc/usb.c **** 				list += 2;
+ 625               		.loc 1 795 0
+ 626               	/* #NOAPP */
+ 627 00aa FC01      		movw r30,r24
+ 628 00ac 3696      		adiw r30,6
+ 629               	.LVL32:
+ 630               	.LBB98:
+ 796:../../protocol/pjrc/usb.c **** 				desc_length = pgm_read_byte(list);
+ 631               		.loc 1 796 0
+ 632               	/* #APP */
+ 633               	 ;  796 "../../protocol/pjrc/usb.c" 1
+ 634 00ae 8491      		lpm r24, Z
+ 635               		
+ 636               	 ;  0 "" 2
+ 637               	.LVL33:
+ 638               	/* #NOAPP */
+ 639               	.LBE98:
+ 797:../../protocol/pjrc/usb.c **** 				break;
+ 798:../../protocol/pjrc/usb.c **** 			}
+ 799:../../protocol/pjrc/usb.c **** 			len = (wLength < 256) ? wLength : 255;
+ 640               		.loc 1 799 0
+ 641 00b0 2F3F      		cpi r18,-1
+ 642 00b2 3105      		cpc r19,__zero_reg__
+ 643 00b4 01F0      		breq .L67
+ 644 00b6 00F0      		brlo .L67
+ 645 00b8 2FEF      		ldi r18,lo8(-1)
+ 646 00ba 30E0      		ldi r19,0
+ 647               	.L67:
+ 648               	.LVL34:
+ 649 00bc 2817      		cp r18,r24
+ 650 00be 00F4      		brsh .L68
+ 651 00c0 822F      		mov r24,r18
+ 652               	.LVL35:
+ 653               	.L68:
+ 654               	.LBB99:
+ 655               	.LBB100:
+ 731:../../protocol/pjrc/usb.c **** }
+ 656               		.loc 1 731 0
+ 657 00c2 3EEF      		ldi r19,lo8(-2)
+ 658               	.LVL36:
+ 659               	.L73:
+ 660               	.LBE100:
+ 661               	.LBE99:
+ 800:../../protocol/pjrc/usb.c **** 			if (len > desc_length) len = desc_length;
+ 801:../../protocol/pjrc/usb.c **** 			do {
+ 802:../../protocol/pjrc/usb.c **** 				// wait for host ready for IN packet
+ 803:../../protocol/pjrc/usb.c **** 				do {
+ 804:../../protocol/pjrc/usb.c **** 					i = UEINTX;
+ 662               		.loc 1 804 0 discriminator 1
+ 663 00c4 9091 E800 		lds r25,232
+ 664               	.LVL37:
+ 805:../../protocol/pjrc/usb.c **** 				} while (!(i & ((1<<TXINI)|(1<<RXOUTI))));
+ 665               		.loc 1 805 0 discriminator 1
+ 666 00c8 292F      		mov r18,r25
+ 667 00ca 2570      		andi r18,lo8(5)
+ 668 00cc 01F0      		breq .L73
+ 806:../../protocol/pjrc/usb.c **** 				if (i & (1<<RXOUTI)) return;	// abort
+ 669               		.loc 1 806 0
+ 670 00ce 92FD      		sbrc r25,2
+ 671 00d0 00C0      		rjmp .L59
+ 807:../../protocol/pjrc/usb.c **** 				// send IN packet
+ 808:../../protocol/pjrc/usb.c **** 				n = len < ENDPOINT0_SIZE ? len : ENDPOINT0_SIZE;
+ 672               		.loc 1 808 0
+ 673 00d2 982F      		mov r25,r24
+ 674               	.LVL38:
+ 675 00d4 8132      		cpi r24,lo8(33)
+ 676 00d6 00F0      		brlo .L75
+ 677 00d8 90E2      		ldi r25,lo8(32)
+ 678               	.L75:
+ 679               	.LVL39:
+ 809:../../protocol/pjrc/usb.c **** 				for (i = n; i; i--) {
+ 680               		.loc 1 809 0
+ 681 00da FA01      		movw r30,r20
+ 682 00dc 292F      		mov r18,r25
+ 683               	.LVL40:
+ 684               	.L76:
+ 685               		.loc 1 809 0 is_stmt 0 discriminator 1
+ 686 00de 2223      		tst r18
+ 687 00e0 01F0      		breq .L137
+ 688               	.LVL41:
+ 689               	.LBB102:
+ 810:../../protocol/pjrc/usb.c **** 					UEDATX = pgm_read_byte(desc_addr++);
+ 690               		.loc 1 810 0 is_stmt 1 discriminator 2
+ 691               	/* #APP */
+ 692               	 ;  810 "../../protocol/pjrc/usb.c" 1
+ 693 00e2 6491      		lpm r22, Z
+ 694               		
+ 695               	 ;  0 "" 2
+ 696               	.LVL42:
+ 697               	/* #NOAPP */
+ 698               	.LBE102:
+ 699 00e4 6093 F100 		sts 241,r22
+ 809:../../protocol/pjrc/usb.c **** 				for (i = n; i; i--) {
+ 700               		.loc 1 809 0 discriminator 2
+ 701 00e8 2150      		subi r18,lo8(-(-1))
+ 702               	.LVL43:
+ 703 00ea 3196      		adiw r30,1
+ 704               	.LVL44:
+ 705 00ec 00C0      		rjmp .L76
+ 706               	.LVL45:
+ 707               	.L137:
+ 708 00ee 490F      		add r20,r25
+ 709 00f0 511D      		adc r21,__zero_reg__
+ 811:../../protocol/pjrc/usb.c **** 				}
+ 812:../../protocol/pjrc/usb.c **** 				len -= n;
+ 710               		.loc 1 812 0
+ 711 00f2 891B      		sub r24,r25
+ 712               	.LVL46:
+ 713               	.LBB103:
+ 714               	.LBB101:
+ 731:../../protocol/pjrc/usb.c **** }
+ 715               		.loc 1 731 0
+ 716 00f4 3093 E800 		sts 232,r19
+ 717               	.LBE101:
+ 718               	.LBE103:
+ 813:../../protocol/pjrc/usb.c **** 				usb_send_in();
+ 814:../../protocol/pjrc/usb.c **** 			} while (len || n == ENDPOINT0_SIZE);
+ 719               		.loc 1 814 0
+ 720 00f8 8111      		cpse r24,__zero_reg__
+ 721 00fa 00C0      		rjmp .L73
+ 722               		.loc 1 814 0 is_stmt 0 discriminator 1
+ 723 00fc 9032      		cpi r25,lo8(32)
+ 724 00fe 01F0      		breq .L73
+ 725 0100 00C0      		rjmp .L59
+ 726               	.LVL47:
+ 727               	.L130:
+ 815:../../protocol/pjrc/usb.c **** 			return;
+ 816:../../protocol/pjrc/usb.c ****                 }
+ 817:../../protocol/pjrc/usb.c **** 		if (bRequest == SET_ADDRESS) {
+ 728               		.loc 1 817 0 is_stmt 1
+ 729 0102 8530      		cpi r24,lo8(5)
+ 730 0104 01F4      		brne .L80
+ 731               	.LBB104:
+ 732               	.LBB105:
+ 731:../../protocol/pjrc/usb.c **** }
+ 733               		.loc 1 731 0
+ 734 0106 8EEF      		ldi r24,lo8(-2)
+ 735               	.LVL48:
+ 736 0108 8093 E800 		sts 232,r24
+ 737               	.LBE105:
+ 738               	.LBE104:
+ 818:../../protocol/pjrc/usb.c **** 			usb_send_in();
+ 819:../../protocol/pjrc/usb.c **** 			usb_wait_in_ready();
+ 739               		.loc 1 819 0
+ 740 010c 0E94 0000 		call usb_wait_in_ready
+ 741               	.LVL49:
+ 820:../../protocol/pjrc/usb.c **** 			UDADDR = wValue | (1<<ADDEN);
+ 742               		.loc 1 820 0
+ 743 0110 8E2D      		mov r24,r14
+ 744 0112 8068      		ori r24,lo8(-128)
+ 745 0114 8093 E300 		sts 227,r24
+ 821:../../protocol/pjrc/usb.c **** 			return;
+ 746               		.loc 1 821 0
+ 747 0118 00C0      		rjmp .L59
+ 748               	.LVL50:
+ 749               	.L80:
+ 822:../../protocol/pjrc/usb.c **** 		}
+ 823:../../protocol/pjrc/usb.c **** 		if (bRequest == SET_CONFIGURATION && bmRequestType == 0) {
+ 750               		.loc 1 823 0
+ 751 011a 8930      		cpi r24,lo8(9)
+ 752 011c 01F4      		brne .L81
+ 753               		.loc 1 823 0 is_stmt 0 discriminator 1
+ 754 011e 9111      		cpse r25,__zero_reg__
+ 755 0120 00C0      		rjmp .L82
+ 824:../../protocol/pjrc/usb.c **** 			usb_configuration = wValue;
+ 756               		.loc 1 824 0 is_stmt 1
+ 757 0122 E092 0000 		sts usb_configuration,r14
+ 758               	.LBB106:
+ 759               	.LBB107:
+ 731:../../protocol/pjrc/usb.c **** }
+ 760               		.loc 1 731 0
+ 761 0126 8EEF      		ldi r24,lo8(-2)
+ 762               	.LVL51:
+ 763 0128 8093 E800 		sts 232,r24
+ 764               	.LVL52:
+ 765               	.LBE107:
+ 766               	.LBE106:
+ 825:../../protocol/pjrc/usb.c **** 			usb_send_in();
+ 826:../../protocol/pjrc/usb.c **** 			cfg = endpoint_config_table;
+ 827:../../protocol/pjrc/usb.c **** 			for (i=1; i<=MAX_ENDPOINT; i++) {
+ 767               		.loc 1 827 0
+ 768 012c 41E0      		ldi r20,lo8(1)
+ 826:../../protocol/pjrc/usb.c **** 			for (i=1; i<=MAX_ENDPOINT; i++) {
+ 769               		.loc 1 826 0
+ 770 012e 80E0      		ldi r24,lo8(endpoint_config_table)
+ 771 0130 90E0      		ldi r25,hi8(endpoint_config_table)
+ 828:../../protocol/pjrc/usb.c **** 				UENUM = i;
+ 829:../../protocol/pjrc/usb.c **** 				en = pgm_read_byte(cfg++);
+ 830:../../protocol/pjrc/usb.c ****                                 if (en) {
+ 831:../../protocol/pjrc/usb.c ****                                     UECONX = (1<<EPEN);
+ 772               		.loc 1 831 0
+ 773 0132 51E0      		ldi r21,lo8(1)
+ 774               	.LVL53:
+ 775               	.L86:
+ 828:../../protocol/pjrc/usb.c **** 				UENUM = i;
+ 776               		.loc 1 828 0
+ 777 0134 4093 E900 		sts 233,r20
+ 778               	.LBB108:
+ 829:../../protocol/pjrc/usb.c ****                                 if (en) {
+ 779               		.loc 1 829 0
+ 780 0138 9C01      		movw r18,r24
+ 781 013a 2F5F      		subi r18,-1
+ 782 013c 3F4F      		sbci r19,-1
+ 783               	.LVL54:
+ 784 013e FC01      		movw r30,r24
+ 785               	/* #APP */
+ 786               	 ;  829 "../../protocol/pjrc/usb.c" 1
+ 787 0140 6491      		lpm r22, Z
+ 788               		
+ 789               	 ;  0 "" 2
+ 790               	.LVL55:
+ 791               	/* #NOAPP */
+ 792               	.LBE108:
+ 830:../../protocol/pjrc/usb.c ****                                     UECONX = (1<<EPEN);
+ 793               		.loc 1 830 0
+ 794 0142 6623      		tst r22
+ 795 0144 01F0      		breq .L83
+ 796               		.loc 1 831 0
+ 797 0146 5093 EB00 		sts 235,r21
+ 798               	.LVL56:
+ 799               	.LBB109:
+ 832:../../protocol/pjrc/usb.c ****                                     UECFG0X = pgm_read_byte(cfg++);
+ 800               		.loc 1 832 0
+ 801 014a F901      		movw r30,r18
+ 802               	/* #APP */
+ 803               	 ;  832 "../../protocol/pjrc/usb.c" 1
+ 804 014c 2491      		lpm r18, Z
+ 805               		
+ 806               	 ;  0 "" 2
+ 807               	.LVL57:
+ 808               	/* #NOAPP */
+ 809               	.LBE109:
+ 810 014e 2093 EC00 		sts 236,r18
+ 811               	.LBB110:
+ 833:../../protocol/pjrc/usb.c ****                                     UECFG1X = pgm_read_byte(cfg++);
+ 812               		.loc 1 833 0
+ 813 0152 9C01      		movw r18,r24
+ 814               	.LVL58:
+ 815 0154 2D5F      		subi r18,-3
+ 816 0156 3F4F      		sbci r19,-1
+ 817               	.LVL59:
+ 818 0158 3196      		adiw r30,1
+ 819               	.LVL60:
+ 820               	/* #APP */
+ 821               	 ;  833 "../../protocol/pjrc/usb.c" 1
+ 822 015a 8491      		lpm r24, Z
+ 823               		
+ 824               	 ;  0 "" 2
+ 825               	.LVL61:
+ 826               	/* #NOAPP */
+ 827               	.LBE110:
+ 828 015c 8093 ED00 		sts 237,r24
+ 829               	.LVL62:
+ 830 0160 00C0      		rjmp .L84
+ 831               	.LVL63:
+ 832               	.L83:
+ 834:../../protocol/pjrc/usb.c ****                                 } else {
+ 835:../../protocol/pjrc/usb.c ****                                     UECONX = 0;
+ 833               		.loc 1 835 0
+ 834 0162 1092 EB00 		sts 235,__zero_reg__
+ 835               	.LVL64:
+ 836               	.L84:
+ 827:../../protocol/pjrc/usb.c **** 				UENUM = i;
+ 837               		.loc 1 827 0
+ 838 0166 4F5F      		subi r20,lo8(-(1))
+ 839               	.LVL65:
+ 840 0168 4730      		cpi r20,lo8(7)
+ 841 016a 01F0      		breq .L85
+ 842 016c C901      		movw r24,r18
+ 843 016e 00C0      		rjmp .L86
+ 844               	.L85:
+ 836:../../protocol/pjrc/usb.c **** 				}
+ 837:../../protocol/pjrc/usb.c **** 			}
+ 838:../../protocol/pjrc/usb.c ****         		UERST = UERST_MASK;
+ 845               		.loc 1 838 0
+ 846 0170 8EE7      		ldi r24,lo8(126)
+ 847 0172 00C0      		rjmp .L133
+ 848               	.LVL66:
+ 849               	.L81:
+ 839:../../protocol/pjrc/usb.c ****         		UERST = 0;
+ 840:../../protocol/pjrc/usb.c **** 			return;
+ 841:../../protocol/pjrc/usb.c **** 		}
+ 842:../../protocol/pjrc/usb.c **** 		if (bRequest == GET_CONFIGURATION && bmRequestType == 0x80) {
+ 850               		.loc 1 842 0
+ 851 0174 8830      		cpi r24,lo8(8)
+ 852 0176 01F4      		brne .L87
+ 853               		.loc 1 842 0 is_stmt 0 discriminator 1
+ 854 0178 9038      		cpi r25,lo8(-128)
+ 855 017a 01F0      		breq .+2
+ 856 017c 00C0      		rjmp .L88
+ 843:../../protocol/pjrc/usb.c **** 			usb_wait_in_ready();
+ 857               		.loc 1 843 0 is_stmt 1
+ 858 017e 0E94 0000 		call usb_wait_in_ready
+ 859               	.LVL67:
+ 844:../../protocol/pjrc/usb.c **** 			UEDATX = usb_configuration;
+ 860               		.loc 1 844 0
+ 861 0182 8091 0000 		lds r24,usb_configuration
+ 862 0186 00C0      		rjmp .L135
+ 863               	.LVL68:
+ 864               	.L87:
+ 845:../../protocol/pjrc/usb.c **** 			usb_send_in();
+ 846:../../protocol/pjrc/usb.c **** 			return;
+ 847:../../protocol/pjrc/usb.c **** 		}
+ 848:../../protocol/pjrc/usb.c **** 
+ 849:../../protocol/pjrc/usb.c **** 		if (bRequest == GET_STATUS) {
+ 865               		.loc 1 849 0
+ 866 0188 8111      		cpse r24,__zero_reg__
+ 867 018a 00C0      		rjmp .L82
+ 850:../../protocol/pjrc/usb.c **** 			usb_wait_in_ready();
+ 868               		.loc 1 850 0
+ 869 018c 9983      		std Y+1,r25
+ 870 018e 0E94 0000 		call usb_wait_in_ready
+ 871               	.LVL69:
+ 851:../../protocol/pjrc/usb.c **** 			i = 0;
+ 852:../../protocol/pjrc/usb.c **** 			#ifdef SUPPORT_ENDPOINT_HALT
+ 853:../../protocol/pjrc/usb.c **** 			if (bmRequestType == 0x82) {
+ 872               		.loc 1 853 0
+ 873 0192 9981      		ldd r25,Y+1
+ 874 0194 9238      		cpi r25,lo8(-126)
+ 875 0196 01F4      		brne .L117
+ 854:../../protocol/pjrc/usb.c **** 				UENUM = wIndex;
+ 876               		.loc 1 854 0
+ 877 0198 0093 E900 		sts 233,r16
+ 855:../../protocol/pjrc/usb.c **** 				if (UECONX & (1<<STALLRQ)) i = 1;
+ 878               		.loc 1 855 0
+ 879 019c 8091 EB00 		lds r24,235
+ 880 01a0 85FB      		bst r24,5
+ 881 01a2 8827      		clr r24
+ 882 01a4 80F9      		bld r24,0
+ 883               	.LVL70:
+ 856:../../protocol/pjrc/usb.c **** 				UENUM = 0;
+ 884               		.loc 1 856 0
+ 885 01a6 1092 E900 		sts 233,__zero_reg__
+ 886 01aa 00C0      		rjmp .L89
+ 887               	.LVL71:
+ 888               	.L117:
+ 851:../../protocol/pjrc/usb.c **** 			#ifdef SUPPORT_ENDPOINT_HALT
+ 889               		.loc 1 851 0
+ 890 01ac 80E0      		ldi r24,0
+ 891               	.LVL72:
+ 892               	.L89:
+ 857:../../protocol/pjrc/usb.c **** 			}
+ 858:../../protocol/pjrc/usb.c **** 			#endif
+ 859:../../protocol/pjrc/usb.c **** 			UEDATX = i;
+ 893               		.loc 1 859 0
+ 894 01ae 8093 F100 		sts 241,r24
+ 895 01b2 00C0      		rjmp .L136
+ 896               	.LVL73:
+ 897               	.L82:
+ 860:../../protocol/pjrc/usb.c **** 			UEDATX = 0;
+ 861:../../protocol/pjrc/usb.c **** 			usb_send_in();
+ 862:../../protocol/pjrc/usb.c **** 			return;
+ 863:../../protocol/pjrc/usb.c **** 		}
+ 864:../../protocol/pjrc/usb.c **** 		if (bRequest == CLEAR_FEATURE || bRequest == SET_FEATURE) {
+ 898               		.loc 1 864 0
+ 899 01b4 482F      		mov r20,r24
+ 900 01b6 4D7F      		andi r20,lo8(-3)
+ 901 01b8 4130      		cpi r20,lo8(1)
+ 902 01ba 01F4      		brne .L88
+ 865:../../protocol/pjrc/usb.c **** #ifdef SUPPORT_ENDPOINT_HALT
+ 866:../../protocol/pjrc/usb.c **** 		    if (bmRequestType == 0x02 && wValue == ENDPOINT_HALT) {
+ 903               		.loc 1 866 0
+ 904 01bc 9230      		cpi r25,lo8(2)
+ 905 01be 01F4      		brne .L90
+ 906               		.loc 1 866 0 is_stmt 0 discriminator 1
+ 907 01c0 E114      		cp r14,__zero_reg__
+ 908 01c2 F104      		cpc r15,__zero_reg__
+ 909 01c4 01F0      		breq .+2
+ 910 01c6 00C0      		rjmp .L91
+ 867:../../protocol/pjrc/usb.c **** 			i = wIndex & 0x7F;
+ 911               		.loc 1 867 0 is_stmt 1
+ 912 01c8 402F      		mov r20,r16
+ 913 01ca 4F77      		andi r20,lo8(127)
+ 914               	.LVL74:
+ 868:../../protocol/pjrc/usb.c **** 			if (i >= 1 && i <= MAX_ENDPOINT) {
+ 915               		.loc 1 868 0
+ 916 01cc 5FEF      		ldi r21,lo8(-1)
+ 917 01ce 540F      		add r21,r20
+ 918 01d0 5630      		cpi r21,lo8(6)
+ 919 01d2 00F0      		brlo .+2
+ 920 01d4 00C0      		rjmp .L91
+ 921               	.LBB111:
+ 922               	.LBB112:
+ 731:../../protocol/pjrc/usb.c **** }
+ 923               		.loc 1 731 0
+ 924 01d6 9EEF      		ldi r25,lo8(-2)
+ 925               	.LVL75:
+ 926 01d8 9093 E800 		sts 232,r25
+ 927               	.LBE112:
+ 928               	.LBE111:
+ 869:../../protocol/pjrc/usb.c **** 				usb_send_in();
+ 870:../../protocol/pjrc/usb.c **** 				UENUM = i;
+ 929               		.loc 1 870 0
+ 930 01dc 4093 E900 		sts 233,r20
+ 871:../../protocol/pjrc/usb.c **** 				if (bRequest == SET_FEATURE) {
+ 931               		.loc 1 871 0
+ 932 01e0 8330      		cpi r24,lo8(3)
+ 933 01e2 01F4      		brne .+2
+ 934 01e4 00C0      		rjmp .L60
+ 872:../../protocol/pjrc/usb.c **** 					UECONX = (1<<STALLRQ)|(1<<EPEN);
+ 873:../../protocol/pjrc/usb.c **** 				} else {
+ 874:../../protocol/pjrc/usb.c **** 					UECONX = (1<<STALLRQC)|(1<<RSTDT)|(1<<EPEN);
+ 935               		.loc 1 874 0
+ 936 01e6 89E1      		ldi r24,lo8(25)
+ 937               	.LVL76:
+ 938 01e8 8093 EB00 		sts 235,r24
+ 875:../../protocol/pjrc/usb.c **** 					UERST = (1 << i);
+ 939               		.loc 1 875 0
+ 940 01ec 81E0      		ldi r24,lo8(1)
+ 941 01ee 90E0      		ldi r25,0
+ 942 01f0 042E      		mov r0,r20
+ 943 01f2 00C0      		rjmp 2f
+ 944               		1:
+ 945 01f4 880F      		lsl r24
+ 946               		2:
+ 947 01f6 0A94      		dec r0
+ 948 01f8 02F4      		brpl 1b
+ 949               	.L133:
+ 950 01fa 8093 EA00 		sts 234,r24
+ 876:../../protocol/pjrc/usb.c **** 					UERST = 0;
+ 951               		.loc 1 876 0
+ 952 01fe 1092 EA00 		sts 234,__zero_reg__
+ 953 0202 00C0      		rjmp .L59
+ 954               	.LVL77:
+ 955               	.L90:
+ 877:../../protocol/pjrc/usb.c **** 				}
+ 878:../../protocol/pjrc/usb.c **** 				return;
+ 879:../../protocol/pjrc/usb.c **** 			}
+ 880:../../protocol/pjrc/usb.c ****                     }
+ 881:../../protocol/pjrc/usb.c **** #endif
+ 882:../../protocol/pjrc/usb.c ****                     if (bmRequestType == 0x00 && wValue == DEVICE_REMOTE_WAKEUP) {
+ 956               		.loc 1 882 0
+ 957 0204 9111      		cpse r25,__zero_reg__
+ 958 0206 00C0      		rjmp .L88
+ 959               		.loc 1 882 0 is_stmt 0 discriminator 1
+ 960 0208 F1E0      		ldi r31,1
+ 961 020a EF16      		cp r14,r31
+ 962 020c F104      		cpc r15,__zero_reg__
+ 963 020e 01F0      		breq .+2
+ 964 0210 00C0      		rjmp .L91
+ 883:../../protocol/pjrc/usb.c ****                         if (bRequest == SET_FEATURE) {
+ 965               		.loc 1 883 0 is_stmt 1
+ 966 0212 8330      		cpi r24,lo8(3)
+ 967 0214 01F4      		brne .L93
+ 884:../../protocol/pjrc/usb.c ****                             remote_wakeup = true;   
+ 968               		.loc 1 884 0
+ 969 0216 4093 0000 		sts remote_wakeup,r20
+ 970 021a 00C0      		rjmp .L134
+ 971               	.L93:
+ 885:../../protocol/pjrc/usb.c ****                         } else {
+ 886:../../protocol/pjrc/usb.c ****                             remote_wakeup = false;
+ 972               		.loc 1 886 0
+ 973 021c 1092 0000 		sts remote_wakeup,__zero_reg__
+ 974 0220 00C0      		rjmp .L134
+ 975               	.L88:
+ 887:../../protocol/pjrc/usb.c ****                         }
+ 888:../../protocol/pjrc/usb.c ****                         usb_send_in();
+ 889:../../protocol/pjrc/usb.c ****                         return;
+ 890:../../protocol/pjrc/usb.c ****                     }
+ 891:../../protocol/pjrc/usb.c **** 		}
+ 892:../../protocol/pjrc/usb.c **** 		if (wIndex == KBD_INTERFACE) {
+ 976               		.loc 1 892 0
+ 977 0222 0115      		cp r16,__zero_reg__
+ 978 0224 1105      		cpc r17,__zero_reg__
+ 979 0226 01F0      		breq .+2
+ 980 0228 00C0      		rjmp .L95
+ 893:../../protocol/pjrc/usb.c **** 			if (bmRequestType == 0xA1) {
+ 981               		.loc 1 893 0
+ 982 022a 913A      		cpi r25,lo8(-95)
+ 983 022c 01F4      		brne .L96
+ 894:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_GET_REPORT) {
+ 984               		.loc 1 894 0
+ 985 022e 8130      		cpi r24,lo8(1)
+ 986 0230 01F4      		brne .L97
+ 895:../../protocol/pjrc/usb.c **** 					usb_wait_in_ready();
+ 987               		.loc 1 895 0
+ 988 0232 0E94 0000 		call usb_wait_in_ready
+ 989               	.LVL78:
+ 896:../../protocol/pjrc/usb.c **** 					UEDATX = keyboard_report->mods;
+ 990               		.loc 1 896 0
+ 991 0236 E091 0000 		lds r30,keyboard_report
+ 992 023a F091 0000 		lds r31,keyboard_report+1
+ 993 023e 8081      		ld r24,Z
+ 994 0240 8093 F100 		sts 241,r24
+ 897:../../protocol/pjrc/usb.c **** 					UEDATX = 0;
+ 995               		.loc 1 897 0
+ 996 0244 1092 F100 		sts 241,__zero_reg__
+ 997               	.LVL79:
+ 998 0248 80E0      		ldi r24,0
+ 999 024a 90E0      		ldi r25,0
+ 1000               	.LVL80:
+ 1001               	.L99:
+ 898:../../protocol/pjrc/usb.c **** 					for (i=0; i<6; i++) {
+ 899:../../protocol/pjrc/usb.c **** 						UEDATX = keyboard_report->keys[i];
+ 1002               		.loc 1 899 0 discriminator 2
+ 1003 024c E091 0000 		lds r30,keyboard_report
+ 1004 0250 F091 0000 		lds r31,keyboard_report+1
+ 1005 0254 E80F      		add r30,r24
+ 1006 0256 F91F      		adc r31,r25
+ 1007 0258 2281      		ldd r18,Z+2
+ 1008 025a 2093 F100 		sts 241,r18
+ 1009               	.LVL81:
+ 1010 025e 0196      		adiw r24,1
+ 1011               	.LVL82:
+ 898:../../protocol/pjrc/usb.c **** 					for (i=0; i<6; i++) {
+ 1012               		.loc 1 898 0 discriminator 2
+ 1013 0260 8630      		cpi r24,6
+ 1014 0262 9105      		cpc r25,__zero_reg__
+ 1015 0264 01F4      		brne .L99
+ 1016 0266 00C0      		rjmp .L134
+ 1017               	.LVL83:
+ 1018               	.L97:
+ 900:../../protocol/pjrc/usb.c **** 					}
+ 901:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 902:../../protocol/pjrc/usb.c **** 					return;
+ 903:../../protocol/pjrc/usb.c **** 				}
+ 904:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_GET_IDLE) {
+ 1019               		.loc 1 904 0
+ 1020 0268 8230      		cpi r24,lo8(2)
+ 1021 026a 01F4      		brne .L100
+ 905:../../protocol/pjrc/usb.c **** 					usb_wait_in_ready();
+ 1022               		.loc 1 905 0
+ 1023 026c 0E94 0000 		call usb_wait_in_ready
+ 1024               	.LVL84:
+ 906:../../protocol/pjrc/usb.c **** 					UEDATX = keyboard_idle;
+ 1025               		.loc 1 906 0
+ 1026 0270 8091 0000 		lds r24,keyboard_idle
+ 1027 0274 00C0      		rjmp .L135
+ 1028               	.LVL85:
+ 1029               	.L100:
+ 907:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 908:../../protocol/pjrc/usb.c **** 					return;
+ 909:../../protocol/pjrc/usb.c **** 				}
+ 910:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_GET_PROTOCOL) {
+ 1030               		.loc 1 910 0
+ 1031 0276 8330      		cpi r24,lo8(3)
+ 1032 0278 01F0      		breq .+2
+ 1033 027a 00C0      		rjmp .L60
+ 911:../../protocol/pjrc/usb.c **** 					usb_wait_in_ready();
+ 1034               		.loc 1 911 0
+ 1035 027c 0E94 0000 		call usb_wait_in_ready
+ 1036               	.LVL86:
+ 912:../../protocol/pjrc/usb.c **** 					UEDATX = keyboard_protocol;
+ 1037               		.loc 1 912 0
+ 1038 0280 8091 0000 		lds r24,keyboard_protocol
+ 1039 0284 00C0      		rjmp .L135
+ 1040               	.LVL87:
+ 1041               	.L96:
+ 913:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 914:../../protocol/pjrc/usb.c **** 					return;
+ 915:../../protocol/pjrc/usb.c **** 				}
+ 916:../../protocol/pjrc/usb.c **** 			}
+ 917:../../protocol/pjrc/usb.c **** 			if (bmRequestType == 0x21) {
+ 1042               		.loc 1 917 0
+ 1043 0286 9132      		cpi r25,lo8(33)
+ 1044 0288 01F0      		breq .+2
+ 1045 028a 00C0      		rjmp .L60
+ 918:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_SET_REPORT) {
+ 1046               		.loc 1 918 0
+ 1047 028c 8930      		cpi r24,lo8(9)
+ 1048 028e 01F4      		brne .L101
+ 1049               	.LVL88:
+ 1050               	.L103:
+ 1051               	.LBB113:
+ 1052               	.LBB114:
+ 735:../../protocol/pjrc/usb.c **** }
+ 1053               		.loc 1 735 0
+ 1054 0290 8091 E800 		lds r24,232
+ 1055 0294 82FF      		sbrs r24,2
+ 1056 0296 00C0      		rjmp .L103
+ 1057               	.LBE114:
+ 1058               	.LBE113:
+ 919:../../protocol/pjrc/usb.c **** 					usb_wait_receive_out();
+ 920:../../protocol/pjrc/usb.c **** 					usb_keyboard_leds = UEDATX;
+ 1059               		.loc 1 920 0
+ 1060 0298 8091 F100 		lds r24,241
+ 1061 029c 8093 0000 		sts usb_keyboard_leds,r24
+ 1062               	.LBB115:
+ 1063               	.LBB116:
+ 739:../../protocol/pjrc/usb.c **** }
+ 1064               		.loc 1 739 0
+ 1065 02a0 8BEF      		ldi r24,lo8(-5)
+ 1066 02a2 8093 E800 		sts 232,r24
+ 1067 02a6 00C0      		rjmp .L134
+ 1068               	.LVL89:
+ 1069               	.L101:
+ 1070               	.LBE116:
+ 1071               	.LBE115:
+ 921:../../protocol/pjrc/usb.c **** 					usb_ack_out();
+ 922:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 923:../../protocol/pjrc/usb.c **** 					return;
+ 924:../../protocol/pjrc/usb.c **** 				}
+ 925:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_SET_IDLE) {
+ 1072               		.loc 1 925 0
+ 1073 02a8 8A30      		cpi r24,lo8(10)
+ 1074 02aa 01F4      		brne .L104
+ 926:../../protocol/pjrc/usb.c **** 					keyboard_idle = (wValue >> 8);
+ 1075               		.loc 1 926 0
+ 1076 02ac F092 0000 		sts keyboard_idle,r15
+ 927:../../protocol/pjrc/usb.c **** 					usb_keyboard_idle_count = 0;
+ 1077               		.loc 1 927 0
+ 1078 02b0 1092 0000 		sts usb_keyboard_idle_count,__zero_reg__
+ 1079 02b4 00C0      		rjmp .L134
+ 1080               	.L104:
+ 928:../../protocol/pjrc/usb.c **** 					//usb_wait_in_ready();
+ 929:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 930:../../protocol/pjrc/usb.c **** 					return;
+ 931:../../protocol/pjrc/usb.c **** 				}
+ 932:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_SET_PROTOCOL) {
+ 1081               		.loc 1 932 0
+ 1082 02b6 8B30      		cpi r24,lo8(11)
+ 1083 02b8 01F0      		breq .+2
+ 1084 02ba 00C0      		rjmp .L60
+ 933:../../protocol/pjrc/usb.c **** 					keyboard_protocol = wValue;
+ 1085               		.loc 1 933 0
+ 1086 02bc E092 0000 		sts keyboard_protocol,r14
+ 934:../../protocol/pjrc/usb.c **** #ifdef NKRO_ENABLE
+ 935:../../protocol/pjrc/usb.c ****                                         keyboard_nkro = !!keyboard_protocol;
+ 1087               		.loc 1 935 0
+ 1088 02c0 81E0      		ldi r24,lo8(1)
+ 1089               	.LVL90:
+ 1090 02c2 E110      		cpse r14,__zero_reg__
+ 1091 02c4 00C0      		rjmp .L105
+ 1092 02c6 80E0      		ldi r24,0
+ 1093               	.L105:
+ 1094 02c8 8093 0000 		sts keyboard_nkro,r24
+ 936:../../protocol/pjrc/usb.c **** #endif
+ 937:../../protocol/pjrc/usb.c ****                                         clear_keyboard();
+ 1095               		.loc 1 937 0
+ 1096 02cc 0E94 0000 		call clear_keyboard
+ 1097               	.LVL91:
+ 1098 02d0 00C0      		rjmp .L134
+ 1099               	.LVL92:
+ 1100               	.L91:
+ 892:../../protocol/pjrc/usb.c **** 			if (bmRequestType == 0xA1) {
+ 1101               		.loc 1 892 0
+ 1102 02d2 0115      		cp r16,__zero_reg__
+ 1103 02d4 1105      		cpc r17,__zero_reg__
+ 1104 02d6 01F4      		brne .+2
+ 1105 02d8 00C0      		rjmp .L60
+ 1106               	.L95:
+ 938:../../protocol/pjrc/usb.c **** 					//usb_wait_in_ready();
+ 939:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 940:../../protocol/pjrc/usb.c **** 					return;
+ 941:../../protocol/pjrc/usb.c **** 				}
+ 942:../../protocol/pjrc/usb.c **** 			}
+ 943:../../protocol/pjrc/usb.c **** 		}
+ 944:../../protocol/pjrc/usb.c **** #ifdef MOUSE_ENABLE
+ 945:../../protocol/pjrc/usb.c **** 		if (wIndex == MOUSE_INTERFACE) {
+ 1107               		.loc 1 945 0
+ 1108 02da 0130      		cpi r16,1
+ 1109 02dc 1105      		cpc r17,__zero_reg__
+ 1110 02de 01F4      		brne .L106
+ 946:../../protocol/pjrc/usb.c **** 			if (bmRequestType == 0xA1) {
+ 1111               		.loc 1 946 0
+ 1112 02e0 913A      		cpi r25,lo8(-95)
+ 1113 02e2 01F4      		brne .L107
+ 947:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_GET_REPORT) {
+ 1114               		.loc 1 947 0
+ 1115 02e4 8130      		cpi r24,lo8(1)
+ 1116 02e6 01F4      		brne .L108
+ 948:../../protocol/pjrc/usb.c ****                                     if (wValue == HID_REPORT_INPUT) {
+ 1117               		.loc 1 948 0
+ 1118 02e8 51E0      		ldi r21,1
+ 1119 02ea E516      		cp r14,r21
+ 1120 02ec F104      		cpc r15,__zero_reg__
+ 1121 02ee 01F4      		brne .L109
+ 949:../../protocol/pjrc/usb.c **** 					usb_wait_in_ready();
+ 1122               		.loc 1 949 0
+ 1123 02f0 0E94 0000 		call usb_wait_in_ready
+ 1124               	.LVL93:
+ 950:../../protocol/pjrc/usb.c **** 					UEDATX = 0;
+ 1125               		.loc 1 950 0
+ 1126 02f4 1092 F100 		sts 241,__zero_reg__
+ 951:../../protocol/pjrc/usb.c **** 					UEDATX = 0;
+ 1127               		.loc 1 951 0
+ 1128 02f8 1092 F100 		sts 241,__zero_reg__
+ 952:../../protocol/pjrc/usb.c **** 					UEDATX = 0;
+ 1129               		.loc 1 952 0
+ 1130 02fc 1092 F100 		sts 241,__zero_reg__
+ 1131               	.L136:
+ 953:../../protocol/pjrc/usb.c **** 					UEDATX = 0;
+ 1132               		.loc 1 953 0
+ 1133 0300 1092 F100 		sts 241,__zero_reg__
+ 1134 0304 00C0      		rjmp .L134
+ 1135               	.LVL94:
+ 1136               	.L109:
+ 954:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 955:../../protocol/pjrc/usb.c **** 					return;
+ 956:../../protocol/pjrc/usb.c ****                                     }
+ 957:../../protocol/pjrc/usb.c ****                                     if (wValue == HID_REPORT_FEATURE) {
+ 1137               		.loc 1 957 0
+ 1138 0306 83E0      		ldi r24,3
+ 1139 0308 E816      		cp r14,r24
+ 1140 030a F104      		cpc r15,__zero_reg__
+ 1141               	.LVL95:
+ 1142 030c 01F4      		brne .L60
+ 958:../../protocol/pjrc/usb.c **** 					usb_wait_in_ready();
+ 1143               		.loc 1 958 0
+ 1144 030e 0E94 0000 		call usb_wait_in_ready
+ 1145               	.LVL96:
+ 959:../../protocol/pjrc/usb.c **** 					UEDATX = 0x05;
+ 1146               		.loc 1 959 0
+ 1147 0312 85E0      		ldi r24,lo8(5)
+ 1148 0314 00C0      		rjmp .L135
+ 1149               	.LVL97:
+ 1150               	.L108:
+ 960:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 961:../../protocol/pjrc/usb.c **** 					return;
+ 962:../../protocol/pjrc/usb.c ****                                     }
+ 963:../../protocol/pjrc/usb.c **** 				}
+ 964:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_GET_PROTOCOL) {
+ 1151               		.loc 1 964 0
+ 1152 0316 8330      		cpi r24,lo8(3)
+ 1153 0318 01F4      		brne .L60
+ 965:../../protocol/pjrc/usb.c **** 					usb_wait_in_ready();
+ 1154               		.loc 1 965 0
+ 1155 031a 0E94 0000 		call usb_wait_in_ready
+ 1156               	.LVL98:
+ 966:../../protocol/pjrc/usb.c **** 					UEDATX = usb_mouse_protocol;
+ 1157               		.loc 1 966 0
+ 1158 031e 8091 0000 		lds r24,usb_mouse_protocol
+ 1159               	.L135:
+ 1160 0322 8093 F100 		sts 241,r24
+ 1161 0326 00C0      		rjmp .L134
+ 1162               	.LVL99:
+ 1163               	.L107:
+ 967:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 968:../../protocol/pjrc/usb.c **** 					return;
+ 969:../../protocol/pjrc/usb.c **** 				}
+ 970:../../protocol/pjrc/usb.c **** 			}
+ 971:../../protocol/pjrc/usb.c **** 			if (bmRequestType == 0x21) {
+ 1164               		.loc 1 971 0
+ 1165 0328 9132      		cpi r25,lo8(33)
+ 1166 032a 01F4      		brne .L60
+ 972:../../protocol/pjrc/usb.c **** 				if (bRequest == HID_SET_PROTOCOL) {
+ 1167               		.loc 1 972 0
+ 1168 032c 8B30      		cpi r24,lo8(11)
+ 1169 032e 01F4      		brne .L60
+ 973:../../protocol/pjrc/usb.c **** 					usb_mouse_protocol = wValue;
+ 1170               		.loc 1 973 0
+ 1171 0330 E092 0000 		sts usb_mouse_protocol,r14
+ 1172               	.LVL100:
+ 1173               	.L134:
+ 1174               	.LBB117:
+ 1175               	.LBB118:
+ 731:../../protocol/pjrc/usb.c **** }
+ 1176               		.loc 1 731 0
+ 1177 0334 8EEF      		ldi r24,lo8(-2)
+ 1178 0336 8093 E800 		sts 232,r24
+ 1179 033a 00C0      		rjmp .L59
+ 1180               	.LVL101:
+ 1181               	.L106:
+ 1182               	.LBE118:
+ 1183               	.LBE117:
+ 974:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 975:../../protocol/pjrc/usb.c **** 					return;
+ 976:../../protocol/pjrc/usb.c **** 				}
+ 977:../../protocol/pjrc/usb.c **** 			}
+ 978:../../protocol/pjrc/usb.c **** 		}
+ 979:../../protocol/pjrc/usb.c **** #endif
+ 980:../../protocol/pjrc/usb.c **** 		if (wIndex == DEBUG_INTERFACE) {
+ 1184               		.loc 1 980 0
+ 1185 033c 0230      		cpi r16,2
+ 1186 033e 1105      		cpc r17,__zero_reg__
+ 1187 0340 01F4      		brne .L60
+ 981:../../protocol/pjrc/usb.c **** 			if (bRequest == HID_GET_REPORT && bmRequestType == 0xA1) {
+ 1188               		.loc 1 981 0
+ 1189 0342 8130      		cpi r24,lo8(1)
+ 1190 0344 01F4      		brne .L60
+ 1191               		.loc 1 981 0 is_stmt 0 discriminator 1
+ 1192 0346 913A      		cpi r25,lo8(-95)
+ 1193 0348 01F4      		brne .L60
+ 1194               	.LBB119:
+ 1195               	.LBB120:
+ 731:../../protocol/pjrc/usb.c **** }
+ 1196               		.loc 1 731 0 is_stmt 1
+ 1197 034a 3EEF      		ldi r19,lo8(-2)
+ 1198               	.LVL102:
+ 1199               	.L112:
+ 1200               	.LBE120:
+ 1201               	.LBE119:
+ 982:../../protocol/pjrc/usb.c **** 				len = wLength;
+ 983:../../protocol/pjrc/usb.c **** 				do {
+ 984:../../protocol/pjrc/usb.c **** 					// wait for host ready for IN packet
+ 985:../../protocol/pjrc/usb.c **** 					do {
+ 986:../../protocol/pjrc/usb.c **** 						i = UEINTX;
+ 1202               		.loc 1 986 0 discriminator 1
+ 1203 034c 8091 E800 		lds r24,232
+ 1204               	.LVL103:
+ 987:../../protocol/pjrc/usb.c **** 					} while (!(i & ((1<<TXINI)|(1<<RXOUTI))));
+ 1205               		.loc 1 987 0 discriminator 1
+ 1206 0350 982F      		mov r25,r24
+ 1207 0352 9570      		andi r25,lo8(5)
+ 1208 0354 01F0      		breq .L112
+ 988:../../protocol/pjrc/usb.c **** 					if (i & (1<<RXOUTI)) return;	// abort
+ 1209               		.loc 1 988 0
+ 1210 0356 82FD      		sbrc r24,2
+ 1211 0358 00C0      		rjmp .L59
+ 989:../../protocol/pjrc/usb.c **** 					// send IN packet
+ 990:../../protocol/pjrc/usb.c **** 					n = len < ENDPOINT0_SIZE ? len : ENDPOINT0_SIZE;
+ 1212               		.loc 1 990 0
+ 1213 035a 822F      		mov r24,r18
+ 1214               	.LVL104:
+ 1215 035c 2132      		cpi r18,lo8(33)
+ 1216 035e 00F0      		brlo .L113
+ 1217 0360 80E2      		ldi r24,lo8(32)
+ 1218               	.L113:
+ 1219               	.LVL105:
+ 991:../../protocol/pjrc/usb.c **** 					for (i = n; i; i--) {
+ 1220               		.loc 1 991 0
+ 1221 0362 982F      		mov r25,r24
+ 1222               	.LVL106:
+ 1223               	.L114:
+ 1224               		.loc 1 991 0 is_stmt 0 discriminator 1
+ 1225 0364 9923      		tst r25
+ 1226 0366 01F0      		breq .L138
+ 992:../../protocol/pjrc/usb.c **** 						UEDATX = 0;
+ 1227               		.loc 1 992 0 is_stmt 1 discriminator 2
+ 1228 0368 1092 F100 		sts 241,__zero_reg__
+ 991:../../protocol/pjrc/usb.c **** 					for (i = n; i; i--) {
+ 1229               		.loc 1 991 0 discriminator 2
+ 1230 036c 9150      		subi r25,lo8(-(-1))
+ 1231               	.LVL107:
+ 1232 036e 00C0      		rjmp .L114
+ 1233               	.L138:
+ 993:../../protocol/pjrc/usb.c **** 					}
+ 994:../../protocol/pjrc/usb.c **** 					len -= n;
+ 1234               		.loc 1 994 0
+ 1235 0370 281B      		sub r18,r24
+ 1236               	.LVL108:
+ 1237               	.LBB122:
+ 1238               	.LBB121:
+ 731:../../protocol/pjrc/usb.c **** }
+ 1239               		.loc 1 731 0
+ 1240 0372 3093 E800 		sts 232,r19
+ 1241               	.LBE121:
+ 1242               	.LBE122:
+ 995:../../protocol/pjrc/usb.c **** 					usb_send_in();
+ 996:../../protocol/pjrc/usb.c **** 				} while (len || n == ENDPOINT0_SIZE);
+ 1243               		.loc 1 996 0
+ 1244 0376 2111      		cpse r18,__zero_reg__
+ 1245 0378 00C0      		rjmp .L112
+ 1246               		.loc 1 996 0 is_stmt 0 discriminator 1
+ 1247 037a 8032      		cpi r24,lo8(32)
+ 1248 037c 01F0      		breq .L112
+ 1249 037e 00C0      		rjmp .L59
+ 1250               	.LVL109:
+ 1251               	.L60:
+ 997:../../protocol/pjrc/usb.c **** 				return;
+ 998:../../protocol/pjrc/usb.c **** 			}
+ 999:../../protocol/pjrc/usb.c **** 		}
+1000:../../protocol/pjrc/usb.c **** 	}
+1001:../../protocol/pjrc/usb.c **** 	UECONX = (1<<STALLRQ) | (1<<EPEN);	// stall
+ 1252               		.loc 1 1001 0 is_stmt 1
+ 1253 0380 81E2      		ldi r24,lo8(33)
+ 1254 0382 8093 EB00 		sts 235,r24
+ 1255               	.L59:
+ 1256               	/* epilogue start */
+1002:../../protocol/pjrc/usb.c **** }
+ 1257               		.loc 1 1002 0
+ 1258 0386 0F90      		pop __tmp_reg__
+ 1259 0388 DF91      		pop r29
+ 1260 038a CF91      		pop r28
+ 1261 038c FF91      		pop r31
+ 1262 038e EF91      		pop r30
+ 1263 0390 BF91      		pop r27
+ 1264 0392 AF91      		pop r26
+ 1265 0394 9F91      		pop r25
+ 1266 0396 8F91      		pop r24
+ 1267 0398 7F91      		pop r23
+ 1268 039a 6F91      		pop r22
+ 1269 039c 5F91      		pop r21
+ 1270 039e 4F91      		pop r20
+ 1271 03a0 3F91      		pop r19
+ 1272 03a2 2F91      		pop r18
+ 1273 03a4 1F91      		pop r17
+ 1274 03a6 0F91      		pop r16
+ 1275 03a8 FF90      		pop r15
+ 1276 03aa EF90      		pop r14
+ 1277 03ac 0F90      		pop r0
+ 1278 03ae 0FBE      		out __SREG__,r0
+ 1279 03b0 0F90      		pop r0
+ 1280 03b2 1F90      		pop r1
+ 1281 03b4 1895      		reti
+ 1282               		.cfi_endproc
+ 1283               	.LFE14:
+ 1285               		.local	div4.2333
+ 1286               		.comm	div4.2333,1,1
+ 1287               		.local	usb_configuration
+ 1288               		.comm	usb_configuration,1,1
+ 1289               		.section	.progmem.data,"a",@progbits
+ 1292               	descriptor_list:
+ 1293 0000 0001      		.word	256
+ 1294 0002 0000      		.word	0
+ 1295 0004 0000      		.word	device_descriptor
+ 1296 0006 12        		.byte	18
+ 1297 0007 0002      		.word	512
+ 1298 0009 0000      		.word	0
+ 1299 000b 0000      		.word	config1_descriptor
+ 1300 000d 86        		.byte	-122
+ 1301 000e 0021      		.word	8448
+ 1302 0010 0000      		.word	0
+ 1303 0012 0000      		.word	config1_descriptor+18
+ 1304 0014 09        		.byte	9
+ 1305 0015 0022      		.word	8704
+ 1306 0017 0000      		.word	0
+ 1307 0019 0000      		.word	keyboard_hid_report_desc
+ 1308 001b 3F        		.byte	63
+ 1309 001c 0021      		.word	8448
+ 1310 001e 0100      		.word	1
+ 1311 0020 0000      		.word	config1_descriptor+43
+ 1312 0022 09        		.byte	9
+ 1313 0023 0022      		.word	8704
+ 1314 0025 0100      		.word	1
+ 1315 0027 0000      		.word	mouse_hid_report_desc
+ 1316 0029 51        		.byte	81
+ 1317 002a 0021      		.word	8448
+ 1318 002c 0200      		.word	2
+ 1319 002e 0000      		.word	config1_descriptor+68
+ 1320 0030 09        		.byte	9
+ 1321 0031 0022      		.word	8704
+ 1322 0033 0200      		.word	2
+ 1323 0035 0000      		.word	debug_hid_report_desc
+ 1324 0037 15        		.byte	21
+ 1325 0038 0021      		.word	8448
+ 1326 003a 0300      		.word	3
+ 1327 003c 0000      		.word	config1_descriptor+93
+ 1328 003e 09        		.byte	9
+ 1329 003f 0022      		.word	8704
+ 1330 0041 0300      		.word	3
+ 1331 0043 0000      		.word	extra_hid_report_desc
+ 1332 0045 30        		.byte	48
+ 1333 0046 0021      		.word	8448
+ 1334 0048 0400      		.word	4
+ 1335 004a 0000      		.word	config1_descriptor+93
+ 1336 004c 09        		.byte	9
+ 1337 004d 0022      		.word	8704
+ 1338 004f 0400      		.word	4
+ 1339 0051 0000      		.word	keyboard2_hid_report_desc
+ 1340 0053 39        		.byte	57
+ 1341 0054 0003      		.word	768
+ 1342 0056 0000      		.word	0
+ 1343 0058 0000      		.word	string0
+ 1344 005a 04        		.byte	4
+ 1345 005b 0103      		.word	769
+ 1346 005d 0904      		.word	1033
+ 1347 005f 0000      		.word	string1
+ 1348 0061 10        		.byte	16
+ 1349 0062 0203      		.word	770
+ 1350 0064 0904      		.word	1033
+ 1351 0066 0000      		.word	string2
+ 1352 0068 10        		.byte	16
+ 1355               	string2:
+ 1356 0069 10        		.byte	16
+ 1357 006a 03        		.byte	3
+ 1358 006b 4500      		.string	"E"
+ 1359 006d 7200      		.string	"r"
+ 1360 006f 6700      		.string	"g"
+ 1361 0071 6F00      		.string	"o"
+ 1362 0073 6400      		.string	"d"
+ 1363 0075 6F00      		.string	"o"
+ 1364 0077 7800      		.string	"x"
+ 1365 0079 00        		.string	""
+ 1366 007a 00        		.string	""
+ 1369               	string1:
+ 1370 007b 10        		.byte	16
+ 1371 007c 03        		.byte	3
+ 1372 007d 5400      		.string	"T"
+ 1373 007f 4D00      		.string	"M"
+ 1374 0081 4B00      		.string	"K"
+ 1375 0083 2F00      		.string	"/"
+ 1376 0085 4300      		.string	"C"
+ 1377 0087 7500      		.string	"u"
+ 1378 0089 6200      		.string	"b"
+ 1379 008b 00        		.string	""
+ 1380 008c 00        		.string	""
+ 1383               	string0:
+ 1384 008d 04        		.byte	4
+ 1385 008e 03        		.byte	3
+ 1386 008f 0904      		.word	1033
+ 1389               	config1_descriptor:
+ 1390 0091 09        		.byte	9
+ 1391 0092 02        		.byte	2
+ 1392 0093 86        		.byte	-122
+ 1393 0094 00        		.byte	0
+ 1394 0095 05        		.byte	5
+ 1395 0096 01        		.byte	1
+ 1396 0097 00        		.byte	0
+ 1397 0098 A0        		.byte	-96
+ 1398 0099 32        		.byte	50
+ 1399 009a 09        		.byte	9
+ 1400 009b 04        		.byte	4
+ 1401 009c 00        		.byte	0
+ 1402 009d 00        		.byte	0
+ 1403 009e 01        		.byte	1
+ 1404 009f 03        		.byte	3
+ 1405 00a0 01        		.byte	1
+ 1406 00a1 01        		.byte	1
+ 1407 00a2 00        		.byte	0
+ 1408 00a3 09        		.byte	9
+ 1409 00a4 21        		.byte	33
+ 1410 00a5 11        		.byte	17
+ 1411 00a6 01        		.byte	1
+ 1412 00a7 00        		.byte	0
+ 1413 00a8 01        		.byte	1
+ 1414 00a9 22        		.byte	34
+ 1415 00aa 3F        		.byte	63
+ 1416 00ab 00        		.byte	0
+ 1417 00ac 07        		.byte	7
+ 1418 00ad 05        		.byte	5
+ 1419 00ae 81        		.byte	-127
+ 1420 00af 03        		.byte	3
+ 1421 00b0 08        		.byte	8
+ 1422 00b1 00        		.byte	0
+ 1423 00b2 0A        		.byte	10
+ 1424 00b3 09        		.byte	9
+ 1425 00b4 04        		.byte	4
+ 1426 00b5 01        		.byte	1
+ 1427 00b6 00        		.byte	0
+ 1428 00b7 01        		.byte	1
+ 1429 00b8 03        		.byte	3
+ 1430 00b9 00        		.byte	0
+ 1431 00ba 00        		.byte	0
+ 1432 00bb 00        		.byte	0
+ 1433 00bc 09        		.byte	9
+ 1434 00bd 21        		.byte	33
+ 1435 00be 11        		.byte	17
+ 1436 00bf 01        		.byte	1
+ 1437 00c0 00        		.byte	0
+ 1438 00c1 01        		.byte	1
+ 1439 00c2 22        		.byte	34
+ 1440 00c3 51        		.byte	81
+ 1441 00c4 00        		.byte	0
+ 1442 00c5 07        		.byte	7
+ 1443 00c6 05        		.byte	5
+ 1444 00c7 82        		.byte	-126
+ 1445 00c8 03        		.byte	3
+ 1446 00c9 08        		.byte	8
+ 1447 00ca 00        		.byte	0
+ 1448 00cb 01        		.byte	1
+ 1449 00cc 09        		.byte	9
+ 1450 00cd 04        		.byte	4
+ 1451 00ce 02        		.byte	2
+ 1452 00cf 00        		.byte	0
+ 1453 00d0 01        		.byte	1
+ 1454 00d1 03        		.byte	3
+ 1455 00d2 00        		.byte	0
+ 1456 00d3 00        		.byte	0
+ 1457 00d4 00        		.byte	0
+ 1458 00d5 09        		.byte	9
+ 1459 00d6 21        		.byte	33
+ 1460 00d7 11        		.byte	17
+ 1461 00d8 01        		.byte	1
+ 1462 00d9 00        		.byte	0
+ 1463 00da 01        		.byte	1
+ 1464 00db 22        		.byte	34
+ 1465 00dc 15        		.byte	21
+ 1466 00dd 00        		.byte	0
+ 1467 00de 07        		.byte	7
+ 1468 00df 05        		.byte	5
+ 1469 00e0 83        		.byte	-125
+ 1470 00e1 03        		.byte	3
+ 1471 00e2 20        		.byte	32
+ 1472 00e3 00        		.byte	0
+ 1473 00e4 01        		.byte	1
+ 1474 00e5 09        		.byte	9
+ 1475 00e6 04        		.byte	4
+ 1476 00e7 03        		.byte	3
+ 1477 00e8 00        		.byte	0
+ 1478 00e9 01        		.byte	1
+ 1479 00ea 03        		.byte	3
+ 1480 00eb 00        		.byte	0
+ 1481 00ec 00        		.byte	0
+ 1482 00ed 00        		.byte	0
+ 1483 00ee 09        		.byte	9
+ 1484 00ef 21        		.byte	33
+ 1485 00f0 11        		.byte	17
+ 1486 00f1 01        		.byte	1
+ 1487 00f2 00        		.byte	0
+ 1488 00f3 01        		.byte	1
+ 1489 00f4 22        		.byte	34
+ 1490 00f5 30        		.byte	48
+ 1491 00f6 00        		.byte	0
+ 1492 00f7 07        		.byte	7
+ 1493 00f8 05        		.byte	5
+ 1494 00f9 84        		.byte	-124
+ 1495 00fa 03        		.byte	3
+ 1496 00fb 08        		.byte	8
+ 1497 00fc 00        		.byte	0
+ 1498 00fd 0A        		.byte	10
+ 1499 00fe 09        		.byte	9
+ 1500 00ff 04        		.byte	4
+ 1501 0100 04        		.byte	4
+ 1502 0101 00        		.byte	0
+ 1503 0102 01        		.byte	1
+ 1504 0103 03        		.byte	3
+ 1505 0104 00        		.byte	0
+ 1506 0105 00        		.byte	0
+ 1507 0106 00        		.byte	0
+ 1508 0107 09        		.byte	9
+ 1509 0108 21        		.byte	33
+ 1510 0109 11        		.byte	17
+ 1511 010a 01        		.byte	1
+ 1512 010b 00        		.byte	0
+ 1513 010c 01        		.byte	1
+ 1514 010d 22        		.byte	34
+ 1515 010e 39        		.byte	57
+ 1516 010f 00        		.byte	0
+ 1517 0110 07        		.byte	7
+ 1518 0111 05        		.byte	5
+ 1519 0112 85        		.byte	-123
+ 1520 0113 03        		.byte	3
+ 1521 0114 10        		.byte	16
+ 1522 0115 00        		.byte	0
+ 1523 0116 01        		.byte	1
+ 1526               	extra_hid_report_desc:
+ 1527 0117 05        		.byte	5
+ 1528 0118 01        		.byte	1
+ 1529 0119 09        		.byte	9
+ 1530 011a 80        		.byte	-128
+ 1531 011b A1        		.byte	-95
+ 1532 011c 01        		.byte	1
+ 1533 011d 85        		.byte	-123
+ 1534 011e 02        		.byte	2
+ 1535 011f 15        		.byte	21
+ 1536 0120 01        		.byte	1
+ 1537 0121 25        		.byte	37
+ 1538 0122 B7        		.byte	-73
+ 1539 0123 19        		.byte	25
+ 1540 0124 01        		.byte	1
+ 1541 0125 29        		.byte	41
+ 1542 0126 B7        		.byte	-73
+ 1543 0127 75        		.byte	117
+ 1544 0128 10        		.byte	16
+ 1545 0129 95        		.byte	-107
+ 1546 012a 01        		.byte	1
+ 1547 012b 81        		.byte	-127
+ 1548 012c 00        		.byte	0
+ 1549 012d C0        		.byte	-64
+ 1550 012e 05        		.byte	5
+ 1551 012f 0C        		.byte	12
+ 1552 0130 09        		.byte	9
+ 1553 0131 01        		.byte	1
+ 1554 0132 A1        		.byte	-95
+ 1555 0133 01        		.byte	1
+ 1556 0134 85        		.byte	-123
+ 1557 0135 03        		.byte	3
+ 1558 0136 15        		.byte	21
+ 1559 0137 01        		.byte	1
+ 1560 0138 26        		.byte	38
+ 1561 0139 9C        		.byte	-100
+ 1562 013a 02        		.byte	2
+ 1563 013b 19        		.byte	25
+ 1564 013c 01        		.byte	1
+ 1565 013d 2A        		.byte	42
+ 1566 013e 9C        		.byte	-100
+ 1567 013f 02        		.byte	2
+ 1568 0140 75        		.byte	117
+ 1569 0141 10        		.byte	16
+ 1570 0142 95        		.byte	-107
+ 1571 0143 01        		.byte	1
+ 1572 0144 81        		.byte	-127
+ 1573 0145 00        		.byte	0
+ 1574 0146 C0        		.byte	-64
+ 1577               	debug_hid_report_desc:
+ 1578 0147 06        		.byte	6
+ 1579 0148 31        		.byte	49
+ 1580 0149 FF        		.byte	-1
+ 1581 014a 09        		.byte	9
+ 1582 014b 74        		.byte	116
+ 1583 014c A1        		.byte	-95
+ 1584 014d 53        		.byte	83
+ 1585 014e 75        		.byte	117
+ 1586 014f 08        		.byte	8
+ 1587 0150 15        		.byte	21
+ 1588 0151 00        		.byte	0
+ 1589 0152 26        		.byte	38
+ 1590 0153 FF        		.byte	-1
+ 1591 0154 00        		.byte	0
+ 1592 0155 95        		.byte	-107
+ 1593 0156 20        		.byte	32
+ 1594 0157 09        		.byte	9
+ 1595 0158 75        		.byte	117
+ 1596 0159 81        		.byte	-127
+ 1597 015a 02        		.byte	2
+ 1598 015b C0        		.byte	-64
+ 1601               	mouse_hid_report_desc:
+ 1602 015c 05        		.byte	5
+ 1603 015d 01        		.byte	1
+ 1604 015e 09        		.byte	9
+ 1605 015f 02        		.byte	2
+ 1606 0160 A1        		.byte	-95
+ 1607 0161 01        		.byte	1
+ 1608 0162 09        		.byte	9
+ 1609 0163 01        		.byte	1
+ 1610 0164 A1        		.byte	-95
+ 1611 0165 00        		.byte	0
+ 1612 0166 05        		.byte	5
+ 1613 0167 09        		.byte	9
+ 1614 0168 19        		.byte	25
+ 1615 0169 01        		.byte	1
+ 1616 016a 29        		.byte	41
+ 1617 016b 05        		.byte	5
+ 1618 016c 15        		.byte	21
+ 1619 016d 00        		.byte	0
+ 1620 016e 25        		.byte	37
+ 1621 016f 01        		.byte	1
+ 1622 0170 75        		.byte	117
+ 1623 0171 01        		.byte	1
+ 1624 0172 95        		.byte	-107
+ 1625 0173 05        		.byte	5
+ 1626 0174 81        		.byte	-127
+ 1627 0175 02        		.byte	2
+ 1628 0176 75        		.byte	117
+ 1629 0177 03        		.byte	3
+ 1630 0178 95        		.byte	-107
+ 1631 0179 01        		.byte	1
+ 1632 017a 81        		.byte	-127
+ 1633 017b 03        		.byte	3
+ 1634 017c 05        		.byte	5
+ 1635 017d 01        		.byte	1
+ 1636 017e 09        		.byte	9
+ 1637 017f 30        		.byte	48
+ 1638 0180 09        		.byte	9
+ 1639 0181 31        		.byte	49
+ 1640 0182 15        		.byte	21
+ 1641 0183 81        		.byte	-127
+ 1642 0184 25        		.byte	37
+ 1643 0185 7F        		.byte	127
+ 1644 0186 75        		.byte	117
+ 1645 0187 08        		.byte	8
+ 1646 0188 95        		.byte	-107
+ 1647 0189 02        		.byte	2
+ 1648 018a 81        		.byte	-127
+ 1649 018b 06        		.byte	6
+ 1650 018c 09        		.byte	9
+ 1651 018d 38        		.byte	56
+ 1652 018e 15        		.byte	21
+ 1653 018f 81        		.byte	-127
+ 1654 0190 25        		.byte	37
+ 1655 0191 7F        		.byte	127
+ 1656 0192 35        		.byte	53
+ 1657 0193 00        		.byte	0
+ 1658 0194 45        		.byte	69
+ 1659 0195 00        		.byte	0
+ 1660 0196 75        		.byte	117
+ 1661 0197 08        		.byte	8
+ 1662 0198 95        		.byte	-107
+ 1663 0199 01        		.byte	1
+ 1664 019a 81        		.byte	-127
+ 1665 019b 06        		.byte	6
+ 1666 019c 05        		.byte	5
+ 1667 019d 0C        		.byte	12
+ 1668 019e 0A        		.byte	10
+ 1669 019f 38        		.byte	56
+ 1670 01a0 02        		.byte	2
+ 1671 01a1 15        		.byte	21
+ 1672 01a2 81        		.byte	-127
+ 1673 01a3 25        		.byte	37
+ 1674 01a4 7F        		.byte	127
+ 1675 01a5 75        		.byte	117
+ 1676 01a6 08        		.byte	8
+ 1677 01a7 95        		.byte	-107
+ 1678 01a8 01        		.byte	1
+ 1679 01a9 81        		.byte	-127
+ 1680 01aa 06        		.byte	6
+ 1681 01ab C0        		.byte	-64
+ 1682 01ac C0        		.byte	-64
+ 1685               	keyboard2_hid_report_desc:
+ 1686 01ad 05        		.byte	5
+ 1687 01ae 01        		.byte	1
+ 1688 01af 09        		.byte	9
+ 1689 01b0 06        		.byte	6
+ 1690 01b1 A1        		.byte	-95
+ 1691 01b2 01        		.byte	1
+ 1692 01b3 75        		.byte	117
+ 1693 01b4 01        		.byte	1
+ 1694 01b5 95        		.byte	-107
+ 1695 01b6 08        		.byte	8
+ 1696 01b7 05        		.byte	5
+ 1697 01b8 07        		.byte	7
+ 1698 01b9 19        		.byte	25
+ 1699 01ba E0        		.byte	-32
+ 1700 01bb 29        		.byte	41
+ 1701 01bc E7        		.byte	-25
+ 1702 01bd 15        		.byte	21
+ 1703 01be 00        		.byte	0
+ 1704 01bf 25        		.byte	37
+ 1705 01c0 01        		.byte	1
+ 1706 01c1 81        		.byte	-127
+ 1707 01c2 02        		.byte	2
+ 1708 01c3 95        		.byte	-107
+ 1709 01c4 05        		.byte	5
+ 1710 01c5 75        		.byte	117
+ 1711 01c6 01        		.byte	1
+ 1712 01c7 05        		.byte	5
+ 1713 01c8 08        		.byte	8
+ 1714 01c9 19        		.byte	25
+ 1715 01ca 01        		.byte	1
+ 1716 01cb 29        		.byte	41
+ 1717 01cc 05        		.byte	5
+ 1718 01cd 91        		.byte	-111
+ 1719 01ce 02        		.byte	2
+ 1720 01cf 95        		.byte	-107
+ 1721 01d0 01        		.byte	1
+ 1722 01d1 75        		.byte	117
+ 1723 01d2 03        		.byte	3
+ 1724 01d3 91        		.byte	-111
+ 1725 01d4 03        		.byte	3
+ 1726 01d5 95        		.byte	-107
+ 1727 01d6 78        		.byte	120
+ 1728 01d7 75        		.byte	117
+ 1729 01d8 01        		.byte	1
+ 1730 01d9 15        		.byte	21
+ 1731 01da 00        		.byte	0
+ 1732 01db 25        		.byte	37
+ 1733 01dc 01        		.byte	1
+ 1734 01dd 05        		.byte	5
+ 1735 01de 07        		.byte	7
+ 1736 01df 19        		.byte	25
+ 1737 01e0 00        		.byte	0
+ 1738 01e1 29        		.byte	41
+ 1739 01e2 77        		.byte	119
+ 1740 01e3 81        		.byte	-127
+ 1741 01e4 02        		.byte	2
+ 1742 01e5 C0        		.byte	-64
+ 1745               	keyboard_hid_report_desc:
+ 1746 01e6 05        		.byte	5
+ 1747 01e7 01        		.byte	1
+ 1748 01e8 09        		.byte	9
+ 1749 01e9 06        		.byte	6
+ 1750 01ea A1        		.byte	-95
+ 1751 01eb 01        		.byte	1
+ 1752 01ec 75        		.byte	117
+ 1753 01ed 01        		.byte	1
+ 1754 01ee 95        		.byte	-107
+ 1755 01ef 08        		.byte	8
+ 1756 01f0 05        		.byte	5
+ 1757 01f1 07        		.byte	7
+ 1758 01f2 19        		.byte	25
+ 1759 01f3 E0        		.byte	-32
+ 1760 01f4 29        		.byte	41
+ 1761 01f5 E7        		.byte	-25
+ 1762 01f6 15        		.byte	21
+ 1763 01f7 00        		.byte	0
+ 1764 01f8 25        		.byte	37
+ 1765 01f9 01        		.byte	1
+ 1766 01fa 81        		.byte	-127
+ 1767 01fb 02        		.byte	2
+ 1768 01fc 95        		.byte	-107
+ 1769 01fd 01        		.byte	1
+ 1770 01fe 75        		.byte	117
+ 1771 01ff 08        		.byte	8
+ 1772 0200 81        		.byte	-127
+ 1773 0201 03        		.byte	3
+ 1774 0202 95        		.byte	-107
+ 1775 0203 05        		.byte	5
+ 1776 0204 75        		.byte	117
+ 1777 0205 01        		.byte	1
+ 1778 0206 05        		.byte	5
+ 1779 0207 08        		.byte	8
+ 1780 0208 19        		.byte	25
+ 1781 0209 01        		.byte	1
+ 1782 020a 29        		.byte	41
+ 1783 020b 05        		.byte	5
+ 1784 020c 91        		.byte	-111
+ 1785 020d 02        		.byte	2
+ 1786 020e 95        		.byte	-107
+ 1787 020f 01        		.byte	1
+ 1788 0210 75        		.byte	117
+ 1789 0211 03        		.byte	3
+ 1790 0212 91        		.byte	-111
+ 1791 0213 03        		.byte	3
+ 1792 0214 95        		.byte	-107
+ 1793 0215 06        		.byte	6
+ 1794 0216 75        		.byte	117
+ 1795 0217 08        		.byte	8
+ 1796 0218 15        		.byte	21
+ 1797 0219 00        		.byte	0
+ 1798 021a 25        		.byte	37
+ 1799 021b FF        		.byte	-1
+ 1800 021c 05        		.byte	5
+ 1801 021d 07        		.byte	7
+ 1802 021e 19        		.byte	25
+ 1803 021f 00        		.byte	0
+ 1804 0220 29        		.byte	41
+ 1805 0221 FF        		.byte	-1
+ 1806 0222 81        		.byte	-127
+ 1807 0223 00        		.byte	0
+ 1808 0224 C0        		.byte	-64
+ 1811               	device_descriptor:
+ 1812 0225 12        		.byte	18
+ 1813 0226 01        		.byte	1
+ 1814 0227 00        		.byte	0
+ 1815 0228 02        		.byte	2
+ 1816 0229 00        		.byte	0
+ 1817 022a 00        		.byte	0
+ 1818 022b 00        		.byte	0
+ 1819 022c 20        		.byte	32
+ 1820 022d ED        		.byte	-19
+ 1821 022e FE        		.byte	-2
+ 1822 022f 07        		.byte	7
+ 1823 0230 13        		.byte	19
+ 1824 0231 01        		.byte	1
+ 1825 0232 00        		.byte	0
+ 1826 0233 01        		.byte	1
+ 1827 0234 02        		.byte	2
+ 1828 0235 00        		.byte	0
+ 1829 0236 01        		.byte	1
+ 1832               	endpoint_config_table:
+ 1833 0237 01        		.byte	1
+ 1834 0238 C1        		.byte	-63
+ 1835 0239 02        		.byte	2
+ 1836 023a 01        		.byte	1
+ 1837 023b C1        		.byte	-63
+ 1838 023c 02        		.byte	2
+ 1839 023d 01        		.byte	1
+ 1840 023e C1        		.byte	-63
+ 1841 023f 26        		.byte	38
+ 1842 0240 01        		.byte	1
+ 1843 0241 C1        		.byte	-63
+ 1844 0242 06        		.byte	6
+ 1845 0243 01        		.byte	1
+ 1846 0244 C1        		.byte	-63
+ 1847 0245 16        		.byte	22
+ 1848 0246 00        		.byte	0
+ 1849               	.global	suspend
+ 1850               		.section .bss
+ 1853               	suspend:
+ 1854 0000 00        		.zero	1
+ 1855               	.global	remote_wakeup
+ 1858               	remote_wakeup:
+ 1859 0001 00        		.zero	1
+ 1860               		.text
+ 1861               	.Letext0:
+ 1862               		.file 3 "/usr/lib/avr/include/stdint.h"
+ 1863               		.file 4 "../../common/report.h"
+ 1864               		.file 5 "../../common/host.h"
+ 1865               		.file 6 "../../protocol/pjrc/usb_keyboard.h"
+ 1866               		.file 7 "../../protocol/pjrc/usb_mouse.h"
+ 1867               		.file 8 "../../protocol/pjrc/usb_debug.h"
+ 1868               		.file 9 "../../common/action_util.h"
+ 1869               		.file 10 "../../common/sleep_led.h"
+ 1870               		.file 11 "../../common/suspend.h"
+ 1871               		.file 12 "../../common/action.h"
+ 1872               		.file 13 "../../common/led.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 usb.c
+     /tmp/ccFcGhb8.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccFcGhb8.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccFcGhb8.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccFcGhb8.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccFcGhb8.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccFcGhb8.s:12     .text.usb_wait_in_ready:0000000000000000 usb_wait_in_ready
+     /tmp/ccFcGhb8.s:35     .text.matrix_power_up:0000000000000000 matrix_power_up
+     /tmp/ccFcGhb8.s:51     .text.matrix_power_down:0000000000000000 matrix_power_down
+     /tmp/ccFcGhb8.s:66     .text.usb_init:0000000000000000 usb_init
+     /tmp/ccFcGhb8.s:1286   .bss:0000000000000003 usb_configuration
+     /tmp/ccFcGhb8.s:1853   .bss:0000000000000000 suspend
+     /tmp/ccFcGhb8.s:113    .text.usb_configured:0000000000000000 usb_configured
+     /tmp/ccFcGhb8.s:141    .text.usb_remote_wakeup:0000000000000000 usb_remote_wakeup
+     /tmp/ccFcGhb8.s:167    .text.__vector_10:0000000000000000 __vector_10
+                             .bss:0000000000000002 div4.2333
+     /tmp/ccFcGhb8.s:415    .text.__vector_11:0000000000000000 __vector_11
+     /tmp/ccFcGhb8.s:1292   .progmem.data:0000000000000000 descriptor_list
+     /tmp/ccFcGhb8.s:1832   .progmem.data:0000000000000237 endpoint_config_table
+     /tmp/ccFcGhb8.s:1858   .bss:0000000000000001 remote_wakeup
+     /tmp/ccFcGhb8.s:1811   .progmem.data:0000000000000225 device_descriptor
+     /tmp/ccFcGhb8.s:1389   .progmem.data:0000000000000091 config1_descriptor
+     /tmp/ccFcGhb8.s:1745   .progmem.data:00000000000001e6 keyboard_hid_report_desc
+     /tmp/ccFcGhb8.s:1601   .progmem.data:000000000000015c mouse_hid_report_desc
+     /tmp/ccFcGhb8.s:1577   .progmem.data:0000000000000147 debug_hid_report_desc
+     /tmp/ccFcGhb8.s:1526   .progmem.data:0000000000000117 extra_hid_report_desc
+     /tmp/ccFcGhb8.s:1685   .progmem.data:00000000000001ad keyboard2_hid_report_desc
+     /tmp/ccFcGhb8.s:1383   .progmem.data:000000000000008d string0
+     /tmp/ccFcGhb8.s:1369   .progmem.data:000000000000007b string1
+     /tmp/ccFcGhb8.s:1355   .progmem.data:0000000000000069 string2
+
+UNDEFINED SYMBOLS
+sleep_led_enable
+suspend_wakeup_init
+sleep_led_disable
+host_keyboard_leds
+led_set
+debug_flush_timer
+keyboard_nkro
+keyboard_idle
+usb_keyboard_idle_count
+keyboard_report
+keyboard_protocol
+usb_keyboard_leds
+clear_keyboard
+usb_mouse_protocol
+__do_clear_bss

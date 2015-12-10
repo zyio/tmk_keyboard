@@ -1,0 +1,227 @@
+   1               		.file	"led.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.led_set,"ax",@progbits
+  11               	.global	led_set
+  13               	led_set:
+  14               	.LFB21:
+  15               		.file 1 "led.c"
+   1:led.c         **** /*
+   2:led.c         **** Copyright 2013 Oleg Kostyuk <cub.uanic@gmail.com>
+   3:led.c         **** 
+   4:led.c         **** This program is free software: you can redistribute it and/or modify
+   5:led.c         **** it under the terms of the GNU General Public License as published by
+   6:led.c         **** the Free Software Foundation, either version 2 of the License, or
+   7:led.c         **** (at your option) any later version.
+   8:led.c         **** 
+   9:led.c         **** This program is distributed in the hope that it will be useful,
+  10:led.c         **** but WITHOUT ANY WARRANTY; without even the implied warranty of
+  11:led.c         **** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  12:led.c         **** GNU General Public License for more details.
+  13:led.c         **** 
+  14:led.c         **** You should have received a copy of the GNU General Public License
+  15:led.c         **** along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  16:led.c         **** */
+  17:led.c         **** 
+  18:led.c         **** #include <stdint.h>
+  19:led.c         **** #include <avr/io.h>
+  20:led.c         **** #include "print.h"
+  21:led.c         **** #include "debug.h"
+  22:led.c         **** #include "led.h"
+  23:led.c         **** #include "ergodox.h"
+  24:led.c         **** 
+  25:led.c         **** 
+  26:led.c         **** void led_set(uint8_t usb_led)
+  27:led.c         **** {
+  16               		.loc 1 27 0
+  17               		.cfi_startproc
+  18               	.LVL0:
+  19               	/* prologue: function */
+  20               	/* frame size = 0 */
+  21               	/* stack size = 0 */
+  22               	.L__stack_usage = 0
+  28:led.c         ****     // topmost - NumLock
+  29:led.c         **** #ifndef INVERT_NUMLOCK
+  30:led.c         ****     if (usb_led & (1<<USB_LED_NUM_LOCK)) {
+  23               		.loc 1 30 0
+  24 0000 80FF      		sbrs r24,0
+  25 0002 00C0      		rjmp .L2
+  26               	.LBB14:
+  27               	.LBB15:
+  28               		.file 2 "ergodox.h"
+   1:ergodox.h     **** /*
+   2:ergodox.h     **** Copyright 2013 Oleg Kostyuk <cub.uanic@gmail.com>
+   3:ergodox.h     **** 
+   4:ergodox.h     **** This program is free software: you can redistribute it and/or modify
+   5:ergodox.h     **** it under the terms of the GNU General Public License as published by
+   6:ergodox.h     **** the Free Software Foundation, either version 2 of the License, or
+   7:ergodox.h     **** (at your option) any later version.
+   8:ergodox.h     **** 
+   9:ergodox.h     **** This program is distributed in the hope that it will be useful,
+  10:ergodox.h     **** but WITHOUT ANY WARRANTY; without even the implied warranty of
+  11:ergodox.h     **** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  12:ergodox.h     **** GNU General Public License for more details.
+  13:ergodox.h     **** 
+  14:ergodox.h     **** You should have received a copy of the GNU General Public License
+  15:ergodox.h     **** along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  16:ergodox.h     **** 
+  17:ergodox.h     **** 
+  18:ergodox.h     **** Copyright (c) 2012, 2013 Ben Blazak <benblazak.dev@gmail.com>
+  19:ergodox.h     **** Released under The MIT License (see "doc/licenses/MIT.md")
+  20:ergodox.h     **** Project located at <https://github.com/benblazak/ergodox-firmware>
+  21:ergodox.h     **** 
+  22:ergodox.h     **** Most used files are located at
+  23:ergodox.h     **** <https://github.com/benblazak/ergodox-firmware/tree/partial-rewrite/firmware/keyboard/ergodox/contr
+  24:ergodox.h     **** 
+  25:ergodox.h     **** */
+  26:ergodox.h     **** 
+  27:ergodox.h     **** #include <stdint.h>
+  28:ergodox.h     **** #include <stdbool.h>
+  29:ergodox.h     **** #include <avr/io.h>
+  30:ergodox.h     **** #include "i2cmaster.h"
+  31:ergodox.h     **** 
+  32:ergodox.h     **** #define CPU_PRESCALE(n) (CLKPR = 0x80, CLKPR = (n))
+  33:ergodox.h     **** #define CPU_16MHz       0x00
+  34:ergodox.h     **** 
+  35:ergodox.h     **** // I2C aliases and register addresses (see "mcp23018.md")
+  36:ergodox.h     **** #define I2C_ADDR        0b0100000
+  37:ergodox.h     **** #define I2C_ADDR_WRITE  ( (I2C_ADDR<<1) | I2C_WRITE )
+  38:ergodox.h     **** #define I2C_ADDR_READ   ( (I2C_ADDR<<1) | I2C_READ  )
+  39:ergodox.h     **** #define IODIRA          0x00            // i/o direction register
+  40:ergodox.h     **** #define IODIRB          0x01
+  41:ergodox.h     **** #define GPPUA           0x0C            // GPIO pull-up resistor register
+  42:ergodox.h     **** #define GPPUB           0x0D
+  43:ergodox.h     **** #define GPIOA           0x12            // general purpose i/o port register (write modifies OLAT)
+  44:ergodox.h     **** #define GPIOB           0x13
+  45:ergodox.h     **** #define OLATA           0x14            // output latch register
+  46:ergodox.h     **** #define OLATB           0x15
+  47:ergodox.h     **** 
+  48:ergodox.h     **** extern uint8_t mcp23018_status;
+  49:ergodox.h     **** 
+  50:ergodox.h     **** void init_ergodox(void);
+  51:ergodox.h     **** void ergodox_blink_all_leds(void);
+  52:ergodox.h     **** uint8_t init_mcp23018(void);
+  53:ergodox.h     **** uint8_t ergodox_left_leds_update(void);
+  54:ergodox.h     **** 
+  55:ergodox.h     **** #define LED_BRIGHTNESS_LO       31
+  56:ergodox.h     **** #define LED_BRIGHTNESS_HI       255
+  57:ergodox.h     **** 
+  58:ergodox.h     **** #define LEFT_LED_1_SHIFT        7       // in MCP23018 port B
+  59:ergodox.h     **** #define LEFT_LED_2_SHIFT        6       // in MCP23018 port B
+  60:ergodox.h     **** #define LEFT_LED_3_SHIFT        7       // in MCP23018 port A
+  61:ergodox.h     **** 
+  62:ergodox.h     **** extern bool ergodox_left_led_1;         // left top
+  63:ergodox.h     **** extern bool ergodox_left_led_2;         // left middle
+  64:ergodox.h     **** extern bool ergodox_left_led_3;         // left bottom
+  65:ergodox.h     **** 
+  66:ergodox.h     **** inline void ergodox_board_led_on(void)      { DDRD |=  (1<<6); PORTD |=  (1<<6); }
+  67:ergodox.h     **** inline void ergodox_right_led_1_on(void)    { DDRB |=  (1<<5); PORTB |=  (1<<5); }
+  29               		.loc 2 67 0
+  30 0004 259A      		sbi 0x4,5
+  31 0006 2D9A      		sbi 0x5,5
+  32 0008 00C0      		rjmp .L3
+  33               	.L2:
+  34               	.LBE15:
+  35               	.LBE14:
+  36               	.LBB16:
+  37               	.LBB17:
+  68:ergodox.h     **** inline void ergodox_right_led_2_on(void)    { DDRB |=  (1<<6); PORTB |=  (1<<6); }
+  69:ergodox.h     **** inline void ergodox_right_led_3_on(void)    { DDRB |=  (1<<7); PORTB |=  (1<<7); }
+  70:ergodox.h     **** inline void ergodox_left_led_1_on(void)     { ergodox_left_led_1 = 1; }
+  71:ergodox.h     **** inline void ergodox_left_led_2_on(void)     { ergodox_left_led_2 = 1; }
+  72:ergodox.h     **** inline void ergodox_left_led_3_on(void)     { ergodox_left_led_3 = 1; }
+  73:ergodox.h     **** 
+  74:ergodox.h     **** inline void ergodox_board_led_off(void)     { DDRD &= ~(1<<6); PORTD &= ~(1<<6); }
+  75:ergodox.h     **** inline void ergodox_right_led_1_off(void)   { DDRB &= ~(1<<5); PORTB &= ~(1<<5); }
+  38               		.loc 2 75 0
+  39 000a 2598      		cbi 0x4,5
+  40 000c 2D98      		cbi 0x5,5
+  41               	.L3:
+  42               	.LBE17:
+  43               	.LBE16:
+  31:led.c         ****         ergodox_right_led_1_on();
+  32:led.c         ****     } else {
+  33:led.c         ****         ergodox_right_led_1_off();
+  34:led.c         ****     }
+  35:led.c         **** #else
+  36:led.c         ****     if (usb_led & (1<<USB_LED_NUM_LOCK)) {
+  37:led.c         ****         ergodox_right_led_1_off();
+  38:led.c         ****     } else {
+  39:led.c         ****         ergodox_right_led_1_on();
+  40:led.c         ****     }
+  41:led.c         **** #endif
+  42:led.c         **** 
+  43:led.c         ****     // middle - CapsLock
+  44:led.c         ****     if (usb_led & (1<<USB_LED_CAPS_LOCK)) {
+  44               		.loc 1 44 0
+  45 000e 81FF      		sbrs r24,1
+  46 0010 00C0      		rjmp .L4
+  47               	.LBB18:
+  48               	.LBB19:
+  68:ergodox.h     **** inline void ergodox_right_led_2_on(void)    { DDRB |=  (1<<6); PORTB |=  (1<<6); }
+  49               		.loc 2 68 0
+  50 0012 269A      		sbi 0x4,6
+  51 0014 2E9A      		sbi 0x5,6
+  52 0016 00C0      		rjmp .L5
+  53               	.L4:
+  54               	.LBE19:
+  55               	.LBE18:
+  56               	.LBB20:
+  57               	.LBB21:
+  76:ergodox.h     **** inline void ergodox_right_led_2_off(void)   { DDRB &= ~(1<<6); PORTB &= ~(1<<6); }
+  58               		.loc 2 76 0
+  59 0018 2698      		cbi 0x4,6
+  60 001a 2E98      		cbi 0x5,6
+  61               	.L5:
+  62               	.LBE21:
+  63               	.LBE20:
+  45:led.c         ****         ergodox_right_led_2_on();
+  46:led.c         ****     } else {
+  47:led.c         ****         ergodox_right_led_2_off();
+  48:led.c         ****     }
+  49:led.c         **** 
+  50:led.c         ****     // bottommost - ScrollLock
+  51:led.c         ****     if (usb_led & (1<<USB_LED_SCROLL_LOCK)) {
+  64               		.loc 1 51 0
+  65 001c 82FF      		sbrs r24,2
+  66 001e 00C0      		rjmp .L6
+  67               	.LBB22:
+  68               	.LBB23:
+  69:ergodox.h     **** inline void ergodox_left_led_1_on(void)     { ergodox_left_led_1 = 1; }
+  69               		.loc 2 69 0
+  70 0020 279A      		sbi 0x4,7
+  71 0022 2F9A      		sbi 0x5,7
+  72 0024 0895      		ret
+  73               	.L6:
+  74               	.LBE23:
+  75               	.LBE22:
+  76               	.LBB24:
+  77               	.LBB25:
+  77:ergodox.h     **** inline void ergodox_right_led_3_off(void)   { DDRB &= ~(1<<7); PORTB &= ~(1<<7); }
+  78               		.loc 2 77 0
+  79 0026 2798      		cbi 0x4,7
+  80 0028 2F98      		cbi 0x5,7
+  81 002a 0895      		ret
+  82               	.LBE25:
+  83               	.LBE24:
+  84               		.cfi_endproc
+  85               	.LFE21:
+  87               		.text
+  88               	.Letext0:
+  89               		.file 3 "/usr/lib/avr/include/stdint.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 led.c
+     /tmp/ccXBzfRO.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccXBzfRO.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccXBzfRO.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccXBzfRO.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccXBzfRO.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccXBzfRO.s:13     .text.led_set:0000000000000000 led_set
+
+NO UNDEFINED SYMBOLS

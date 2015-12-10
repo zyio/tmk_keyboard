@@ -1,0 +1,278 @@
+   1               		.file	"main.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   7               		.text
+   8               	.Ltext0:
+   9               		.cfi_sections	.debug_frame
+  10               		.section	.text.matrix_power_up,"ax",@progbits
+  11               		.weak	matrix_power_up
+  13               	matrix_power_up:
+  14               	.LFB9:
+  15               		.file 1 "../../common/keyboard.h"
+   1:../../common/keyboard.h **** /*
+   2:../../common/keyboard.h **** Copyright 2011,2012,2013 Jun Wako <wakojun@gmail.com>
+   3:../../common/keyboard.h **** 
+   4:../../common/keyboard.h **** This program is free software: you can redistribute it and/or modify
+   5:../../common/keyboard.h **** it under the terms of the GNU General Public License as published by
+   6:../../common/keyboard.h **** the Free Software Foundation, either version 2 of the License, or
+   7:../../common/keyboard.h **** (at your option) any later version.
+   8:../../common/keyboard.h **** 
+   9:../../common/keyboard.h **** This program is distributed in the hope that it will be useful,
+  10:../../common/keyboard.h **** but WITHOUT ANY WARRANTY; without even the implied warranty of
+  11:../../common/keyboard.h **** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  12:../../common/keyboard.h **** GNU General Public License for more details.
+  13:../../common/keyboard.h **** 
+  14:../../common/keyboard.h **** You should have received a copy of the GNU General Public License
+  15:../../common/keyboard.h **** along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  16:../../common/keyboard.h **** */
+  17:../../common/keyboard.h **** 
+  18:../../common/keyboard.h **** #ifndef KEYBOARD_H
+  19:../../common/keyboard.h **** #define KEYBOARD_H
+  20:../../common/keyboard.h **** 
+  21:../../common/keyboard.h **** #include <stdbool.h>
+  22:../../common/keyboard.h **** #include <stdint.h>
+  23:../../common/keyboard.h **** 
+  24:../../common/keyboard.h **** 
+  25:../../common/keyboard.h **** #ifdef __cplusplus
+  26:../../common/keyboard.h **** extern "C" {
+  27:../../common/keyboard.h **** #endif
+  28:../../common/keyboard.h **** 
+  29:../../common/keyboard.h **** /* key matrix position */
+  30:../../common/keyboard.h **** typedef struct {
+  31:../../common/keyboard.h ****     uint8_t col;
+  32:../../common/keyboard.h ****     uint8_t row;
+  33:../../common/keyboard.h **** } keypos_t;
+  34:../../common/keyboard.h **** 
+  35:../../common/keyboard.h **** /* key event */
+  36:../../common/keyboard.h **** typedef struct {
+  37:../../common/keyboard.h ****     keypos_t key;
+  38:../../common/keyboard.h ****     bool     pressed;
+  39:../../common/keyboard.h ****     uint16_t time;
+  40:../../common/keyboard.h **** } keyevent_t;
+  41:../../common/keyboard.h **** 
+  42:../../common/keyboard.h **** /* equivalent test of keypos_t */
+  43:../../common/keyboard.h **** #define KEYEQ(keya, keyb)       ((keya).row == (keyb).row && (keya).col == (keyb).col)
+  44:../../common/keyboard.h **** 
+  45:../../common/keyboard.h **** /* Rules for No Event:
+  46:../../common/keyboard.h ****  * 1) (time == 0) to handle (keyevent_t){} as empty event
+  47:../../common/keyboard.h ****  * 2) Matrix(255, 255) to make TICK event available
+  48:../../common/keyboard.h ****  */
+  49:../../common/keyboard.h **** static inline bool IS_NOEVENT(keyevent_t event) { return event.time == 0 || (event.key.row == 255 &
+  50:../../common/keyboard.h **** static inline bool IS_PRESSED(keyevent_t event) { return (!IS_NOEVENT(event) && event.pressed); }
+  51:../../common/keyboard.h **** static inline bool IS_RELEASED(keyevent_t event) { return (!IS_NOEVENT(event) && !event.pressed); }
+  52:../../common/keyboard.h **** 
+  53:../../common/keyboard.h **** /* Tick event */
+  54:../../common/keyboard.h **** #define TICK                    (keyevent_t){           \
+  55:../../common/keyboard.h ****     .key = (keypos_t){ .row = 255, .col = 255 },           \
+  56:../../common/keyboard.h ****     .pressed = false,                                   \
+  57:../../common/keyboard.h ****     .time = (timer_read() | 1)                          \
+  58:../../common/keyboard.h **** }
+  59:../../common/keyboard.h **** 
+  60:../../common/keyboard.h **** 
+  61:../../common/keyboard.h **** void keyboard_init(void);
+  62:../../common/keyboard.h **** void keyboard_task(void);
+  63:../../common/keyboard.h **** void keyboard_set_leds(uint8_t leds);
+  64:../../common/keyboard.h **** 
+  65:../../common/keyboard.h **** __attribute__ ((weak)) void matrix_power_up(void) {}
+  16               		.loc 1 65 0
+  17               		.cfi_startproc
+  18               	/* prologue: function */
+  19               	/* frame size = 0 */
+  20               	/* stack size = 0 */
+  21               	.L__stack_usage = 0
+  22 0000 0895      		ret
+  23               		.cfi_endproc
+  24               	.LFE9:
+  26               		.section	.text.matrix_power_down,"ax",@progbits
+  27               		.weak	matrix_power_down
+  29               	matrix_power_down:
+  30               	.LFB10:
+  66:../../common/keyboard.h **** __attribute__ ((weak)) void matrix_power_down(void) {}
+  31               		.loc 1 66 0
+  32               		.cfi_startproc
+  33               	/* prologue: function */
+  34               	/* frame size = 0 */
+  35               	/* stack size = 0 */
+  36               	.L__stack_usage = 0
+  37 0000 0895      		ret
+  38               		.cfi_endproc
+  39               	.LFE10:
+  41               		.section	.text.startup.main,"ax",@progbits
+  42               	.global	main
+  44               	main:
+  45               	.LFB12:
+  46               		.file 2 "../../protocol/pjrc/main.c"
+   1:../../protocol/pjrc/main.c **** /* Keyboard example with debug channel, for Teensy USB Development Board
+   2:../../protocol/pjrc/main.c ****  * http://www.pjrc.com/teensy/usb_keyboard.html
+   3:../../protocol/pjrc/main.c ****  * Copyright (c) 2008 PJRC.COM, LLC
+   4:../../protocol/pjrc/main.c ****  * 
+   5:../../protocol/pjrc/main.c ****  * Permission is hereby granted, free of charge, to any person obtaining a copy
+   6:../../protocol/pjrc/main.c ****  * of this software and associated documentation files (the "Software"), to deal
+   7:../../protocol/pjrc/main.c ****  * in the Software without restriction, including without limitation the rights
+   8:../../protocol/pjrc/main.c ****  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   9:../../protocol/pjrc/main.c ****  * copies of the Software, and to permit persons to whom the Software is
+  10:../../protocol/pjrc/main.c ****  * furnished to do so, subject to the following conditions:
+  11:../../protocol/pjrc/main.c ****  * 
+  12:../../protocol/pjrc/main.c ****  * The above copyright notice and this permission notice shall be included in
+  13:../../protocol/pjrc/main.c ****  * all copies or substantial portions of the Software.
+  14:../../protocol/pjrc/main.c ****  * 
+  15:../../protocol/pjrc/main.c ****  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  16:../../protocol/pjrc/main.c ****  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  17:../../protocol/pjrc/main.c ****  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  18:../../protocol/pjrc/main.c ****  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  19:../../protocol/pjrc/main.c ****  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  20:../../protocol/pjrc/main.c ****  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  21:../../protocol/pjrc/main.c ****  * THE SOFTWARE.
+  22:../../protocol/pjrc/main.c ****  */
+  23:../../protocol/pjrc/main.c **** 
+  24:../../protocol/pjrc/main.c **** #include <stdbool.h>
+  25:../../protocol/pjrc/main.c **** #include <avr/io.h>
+  26:../../protocol/pjrc/main.c **** #include <avr/interrupt.h>
+  27:../../protocol/pjrc/main.c **** #include <avr/wdt.h>
+  28:../../protocol/pjrc/main.c **** #include <util/delay.h>
+  29:../../protocol/pjrc/main.c **** #include "keyboard.h"
+  30:../../protocol/pjrc/main.c **** #include "usb.h"
+  31:../../protocol/pjrc/main.c **** #include "matrix.h"
+  32:../../protocol/pjrc/main.c **** #include "print.h"
+  33:../../protocol/pjrc/main.c **** #include "debug.h"
+  34:../../protocol/pjrc/main.c **** #include "sendchar.h"
+  35:../../protocol/pjrc/main.c **** #include "util.h"
+  36:../../protocol/pjrc/main.c **** #include "suspend.h"
+  37:../../protocol/pjrc/main.c **** #include "host.h"
+  38:../../protocol/pjrc/main.c **** #include "pjrc.h"
+  39:../../protocol/pjrc/main.c **** 
+  40:../../protocol/pjrc/main.c **** 
+  41:../../protocol/pjrc/main.c **** #define CPU_PRESCALE(n)    (CLKPR = 0x80, CLKPR = (n))
+  42:../../protocol/pjrc/main.c **** 
+  43:../../protocol/pjrc/main.c **** 
+  44:../../protocol/pjrc/main.c **** int main(void)
+  45:../../protocol/pjrc/main.c **** {
+  47               		.loc 2 45 0
+  48               		.cfi_startproc
+  49               	/* prologue: function */
+  50               	/* frame size = 0 */
+  51               	/* stack size = 0 */
+  52               	.L__stack_usage = 0
+  46:../../protocol/pjrc/main.c ****     // set for 16 MHz clock
+  47:../../protocol/pjrc/main.c ****     CPU_PRESCALE(0);
+  53               		.loc 2 47 0
+  54 0000 80E8      		ldi r24,lo8(-128)
+  55 0002 8093 6100 		sts 97,r24
+  56 0006 1092 6100 		sts 97,__zero_reg__
+  48:../../protocol/pjrc/main.c **** 
+  49:../../protocol/pjrc/main.c ****     // Initialize the USB, and then wait for the host to set configuration.
+  50:../../protocol/pjrc/main.c ****     // If the Teensy is powered without a PC connected to the USB port,
+  51:../../protocol/pjrc/main.c ****     // this will wait forever.
+  52:../../protocol/pjrc/main.c ****     usb_init();
+  57               		.loc 2 52 0
+  58 000a 0E94 0000 		call usb_init
+  59               	.LVL0:
+  60               	.L5:
+  53:../../protocol/pjrc/main.c ****     while (!usb_configured()) /* wait */ ;
+  61               		.loc 2 53 0 discriminator 1
+  62 000e 0E94 0000 		call usb_configured
+  63               	.LVL1:
+  64 0012 8823      		tst r24
+  65 0014 01F0      		breq .L5
+  54:../../protocol/pjrc/main.c **** 
+  55:../../protocol/pjrc/main.c ****     print_set_sendchar(sendchar);
+  66               		.loc 2 55 0
+  67 0016 80E0      		ldi r24,lo8(gs(sendchar))
+  68 0018 90E0      		ldi r25,hi8(gs(sendchar))
+  69 001a 0E94 0000 		call print_set_sendchar
+  70               	.LVL2:
+  56:../../protocol/pjrc/main.c **** 
+  57:../../protocol/pjrc/main.c ****     keyboard_init();
+  71               		.loc 2 57 0
+  72 001e 0E94 0000 		call keyboard_init
+  73               	.LVL3:
+  58:../../protocol/pjrc/main.c ****     host_set_driver(pjrc_driver());
+  74               		.loc 2 58 0
+  75 0022 0E94 0000 		call pjrc_driver
+  76               	.LVL4:
+  77 0026 0E94 0000 		call host_set_driver
+  78               	.LVL5:
+  59:../../protocol/pjrc/main.c **** #ifdef SLEEP_LED_ENABLE
+  60:../../protocol/pjrc/main.c ****     sleep_led_init();
+  79               		.loc 2 60 0
+  80 002a 0E94 0000 		call sleep_led_init
+  81               	.LVL6:
+  82               	.L6:
+  61:../../protocol/pjrc/main.c **** #endif
+  62:../../protocol/pjrc/main.c ****     while (1) {
+  63:../../protocol/pjrc/main.c ****         while (suspend) {
+  83               		.loc 2 63 0 discriminator 1
+  84 002e 8091 0000 		lds r24,suspend
+  85 0032 8823      		tst r24
+  86 0034 01F0      		breq .L15
+  64:../../protocol/pjrc/main.c ****             suspend_power_down();
+  87               		.loc 2 64 0
+  88 0036 0E94 0000 		call suspend_power_down
+  89               	.LVL7:
+  65:../../protocol/pjrc/main.c ****             if (remote_wakeup && suspend_wakeup_condition()) {
+  90               		.loc 2 65 0
+  91 003a 8091 0000 		lds r24,remote_wakeup
+  92 003e 8823      		tst r24
+  93 0040 01F0      		breq .L6
+  94               		.loc 2 65 0 is_stmt 0 discriminator 1
+  95 0042 0E94 0000 		call suspend_wakeup_condition
+  96               	.LVL8:
+  97 0046 8823      		tst r24
+  98 0048 01F0      		breq .L6
+  66:../../protocol/pjrc/main.c ****                 usb_remote_wakeup();
+  99               		.loc 2 66 0 is_stmt 1
+ 100 004a 0E94 0000 		call usb_remote_wakeup
+ 101               	.LVL9:
+ 102 004e 00C0      		rjmp .L6
+ 103               	.L15:
+  67:../../protocol/pjrc/main.c ****             }
+  68:../../protocol/pjrc/main.c ****         }
+  69:../../protocol/pjrc/main.c **** 
+  70:../../protocol/pjrc/main.c ****         keyboard_task(); 
+ 104               		.loc 2 70 0
+ 105 0050 0E94 0000 		call keyboard_task
+ 106               	.LVL10:
+  71:../../protocol/pjrc/main.c ****     }
+ 107               		.loc 2 71 0
+ 108 0054 00C0      		rjmp .L6
+ 109               		.cfi_endproc
+ 110               	.LFE12:
+ 112               		.text
+ 113               	.Letext0:
+ 114               		.file 3 "/usr/lib/avr/include/stdint.h"
+ 115               		.file 4 "../../common/report.h"
+ 116               		.file 5 "../../common/host_driver.h"
+ 117               		.file 6 "../../protocol/pjrc/usb.h"
+ 118               		.file 7 "../../common/print.h"
+ 119               		.file 8 "../../protocol/pjrc/pjrc.h"
+ 120               		.file 9 "../../common/host.h"
+ 121               		.file 10 "../../common/suspend.h"
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 main.c
+     /tmp/ccimzy7W.s:2      *ABS*:000000000000003e __SP_H__
+     /tmp/ccimzy7W.s:3      *ABS*:000000000000003d __SP_L__
+     /tmp/ccimzy7W.s:4      *ABS*:000000000000003f __SREG__
+     /tmp/ccimzy7W.s:5      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/ccimzy7W.s:6      *ABS*:0000000000000001 __zero_reg__
+     /tmp/ccimzy7W.s:13     .text.matrix_power_up:0000000000000000 matrix_power_up
+     /tmp/ccimzy7W.s:29     .text.matrix_power_down:0000000000000000 matrix_power_down
+     /tmp/ccimzy7W.s:44     .text.startup.main:0000000000000000 main
+
+UNDEFINED SYMBOLS
+usb_init
+usb_configured
+sendchar
+print_set_sendchar
+keyboard_init
+pjrc_driver
+host_set_driver
+sleep_led_init
+suspend
+suspend_power_down
+remote_wakeup
+suspend_wakeup_condition
+usb_remote_wakeup
+keyboard_task
