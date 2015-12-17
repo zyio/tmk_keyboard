@@ -1,3 +1,21 @@
+zyio Ergodox TMK Keyboard Fork
+==============================
+
+Forked <http://github.com/tmk/tmk_keyboard> and removed the majority of things I didn't need.
+
+Modified the main keymap to suit my needs and implemented the plover inspired NKRO functionality from another branch.
+
+cd into keyboards/ergodox and run:
+
+```
+make -f Makefile.pjrc clean
+make -f Makefile.pjrc 
+```
+
+Use the teensy loader to flash the resulting .eep and then the .hex file onto your ergodox.
+
+
+
 TMK Keyboard Firmware Collection
 ================================
 This is a keyboard firmware with some useful features for Atmel AVR controller.
