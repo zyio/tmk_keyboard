@@ -106,7 +106,7 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
            EQL, 6,   7,   8,   9,   0,   DEL,
            RBRC,Y,   U,   I,   O,   P,   NUBS,
                 H,   J,   K,   L,   SCLN,QUOT,
-           FN1, N,   M,   COMM,DOT, SLSH,RSFT,
+           FN2, N,   M,   COMM,DOT, SLSH,RSFT,
                      LEFT,DOWN,UP,  RGHT,RGUI,
       PSCR,INS,
       PGUP,
@@ -134,25 +134,25 @@ static const uint8_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         TRNS,TRNS,TRNS
     ),
 
-    KEYMAP(  // layer 2 : keyboard functions
+    KEYMAP(  // layer 2 : colemak
         // left hand
-        FN0, TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,TRNS,TRNS,TRNS,
-                                      TRNS,TRNS,
-                                           TRNS,
-                                 TRNS,TRNS,TRNS,
+        ESC, 1,   2,   3,   4,   5,   MINS,
+        TAB,Q,   W,   F,   P,   G,   LBRC,
+        LCTL, A,   R,   S,   T,   D,
+        LSFT,Z,   X,   C,   V,   B,   FN1,
+        LGUI,GRV, NUHS,QUOT,NUBS,
+                                      LCTL,LALT,
+                                           HOME,
+                                 SPC,BSPC, END,
         // right hand
-             FN4, TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                  TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-             TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,TRNS,
-                       TRNS,TRNS,TRNS,TRNS,TRNS,
-        TRNS,TRNS,
-        TRNS,
-        TRNS,TRNS,TRNS
+             EQL, 6,   7,   8,   9,   0,   DEL,
+             RBRC,J,   L,   U,   Y,   SCLN,   NUBS,
+                  H,   N,   E,   I,   O,QUOT,
+             FN0, K,   M,   COMM,DOT, SLSH,RSFT,
+                       LEFT,DOWN,UP,  RGHT,RGUI,
+        PSCR,INS,
+        PGUP,
+        PGDN,ENT, SPC
     ),
 
     KEYMAP(  // layer 3: numpad
